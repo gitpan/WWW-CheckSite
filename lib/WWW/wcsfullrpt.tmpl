@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <!-- $Id: wcsfullrpt.tmpl 282 2005-04-02 09:48:07Z abeltje $ -->
+    <meta http-equiv="Content-type"
+          content="text/html; charset=iso-8859-1" />
+    <title>WWW::CheckSite full report</title>
+    <style type="text/css">
+<!--
+body      { background-color: #CCF; font-family: sans serif; }
+.even     { background-color: #BBF; }
+.red      { color: #F00; font-weight: bold; }
+.green    { color: #090; font-weight: bold; }
+dd ol li  { font-size: smaller;             }
+-->
+    </style>
+  </head>
+  <body>
+    <h1>CheckSite report for <tmpl_var name=url escape=HTML></h1>
+    <h2><tmpl_var title></h2>
+<a name="summary"></a>
+Generated: <tmpl_var now_time><br />
+See also: <a href="<tmpl_var summlink>" title="Errors report">Errors
+only</a><br />
+
+<tmpl_if strict_rules>WWW::CheckSite ran with <b>--strictrules</b>
+<br /></tmpl_if>
+
+<tmpl_if language>Accept-Language: <b><tmpl_var language></b>
+<br /></tmpl_if>
+
+    <hr />
+    <h2>Summary</h2>
+    <hr />
+    Checked <tmpl_var page_cnt> pages.<br />
+    <tmpl_if did_validate>
+      <tmpl_var valid_ok> pages out of
+      <tmpl_var valid_cnt> validated ok at W3.
+    <tmpl_else>
+      W3 validation was skipped.
+    </tmpl_if><br />
+
+<ol><tmpl_loop pages>
+  <li<tmpl_unless __ODD__> class="even"</tmpl_unless>>
+    <a href="#<tmpl_var intref>"
+       title="Details for &quot;<tmpl_var name=title escape=HTML>&quot;"
+    ><tmpl_var name=title escape=HTML></a>
+    (returned <span class="<tmpl_if status_ok>green<tmpl_else>red</tmpl_if>"
+     ><tmpl_var status_tx></span>; W3 validation
+     <span class="<tmpl_if valid>green<tmpl_else>red</tmpl_if>"
+     ><tmpl_var valid_tx></span>
+    )<br /><tmpl_if link_cnt>
+    This page had <tmpl_var link_cnt> links checked;
+    <tmpl_var links_ok> successfully followed: <span 
+      class="<tmpl_if link_status_ok>green<tmpl_else>red</tmpl_if>"
+      ><tmpl_var link_status></span><br /></tmpl_if><tmpl_if image_cnt>
+
+    This page had <tmpl_var image_cnt> images checked;
+    <tmpl_var images_ok> successfully loaded: <span
+      class="<tmpl_if image_status_ok>green<tmpl_else>red</tmpl_if>"
+      ><tmpl_var image_status></span><br /></tmpl_if><tmpl_if style_cnt>
+
+    This page had <tmpl_var style_cnt> styles checked;
+    <tmpl_var styles_ok> successfully loaded: <span
+      class="<tmpl_if style_status_ok>green<tmpl_else>red</tmpl_if>"
+      ><tmpl_var style_status></span>; <tmpl_var vstyles_ok> css-validated
+     </tmpl_if>
+
+  </li></tmpl_loop>
+</ol>
+
+     <hr />
+    <h2>Details</h2>
+
+<tmpl_loop pages>
+<hr /><dl>
+  <dt class="detaildt"><a name="<tmpl_var name=intref>"></a>
+    <a href="<tmpl_var name=uri>" target="_blank"
+       title="Open this page in a new window">
+    <tmpl_var name=uri escape=HTML></a> returned status 
+   <span class="<tmpl_if status_ok>green<tmpl_else>red</tmpl_if>"
+     ><tmpl_var status_tx></span>
+  </dt>
+  <dd>
+    <p>
+    Title: <b><tmpl_var name=title escape=HTML></b><br />
+    Content-type: <tmpl_var ct><br />
+    <a href="http://validator.w3.org/check?uri=<tmpl_var name=uri>"
+       title="Run W3 validation on this page" target="_blank">
+    W3 validation</a>:
+    <span class="<tmpl_if valid>green<tmpl_else>red</tmpl_if>"
+     ><tmpl_var valid_tx></span><br />
+    Depth: <tmpl_var depth>
+    </p>
+    <tmpl_if links><p class="detaildt">
+    <b>Links checked on this page: <tmpl_var link_cnt></b>
+    (<tmpl_var links_ok> ok<tmpl_if links_sk>;
+    <tmpl_var links_sk> skipped</tmpl_if>): <span
+    <tmpl_if link_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
+     ><tmpl_var link_status></span>
+    <tmpl_unless links><b>none</b></tmpl_unless>
+    </p>
+    <ol><tmpl_loop links>
+      <li <tmpl_unless __ODD__>class="even"</tmpl_unless>>
+        <a href="<tmpl_var name=uri>" target="_blank"
+           title="Open this page in new window">
+        <tmpl_var name=uri></a> returned status 
+        <span <tmpl_unless status_ok>
+             class="red"<tmpl_else>class="green"</tmpl_unless>
+        ><tmpl_var status_tx></span><br />
+
+       <b><tmpl_if intref><a href="#<tmpl_var intref>"
+              title="Jump to detail for this page"></tmpl_if>
+<tmpl_if type_area>&lt;area href=&quot;<tmpl_var name=link>&quot;
+      alt=&quot;<span 
+      class="<tmpl_if no_text>red<tmpl_else>green</tmpl_if>"
+   ><tmpl_var name=text escape=HTML></span>&quot;
+    /&gt;<tmpl_if intref></a></tmpl_if></b><br />
+<tmpl_else>&lt;a href=&quot;<tmpl_var name=link>&quot;&gt;<span
+  class="<tmpl_if no_text>red<tmpl_else>green</tmpl_if>"
+   ><tmpl_var name=text escape=HTML></span>&lt;/a&gt;
+   <tmpl_if intref></a></tmpl_if></b>
+   <br />
+</tmpl_if>
+
+      </li></tmpl_loop>
+    </ol></tmpl_if>
+
+    <tmpl_if images><p class="detaildt">
+    <b>Images checked on this page: <tmpl_var image_cnt></b>
+    (<tmpl_var images_ok> ok): <span
+    <tmpl_if image_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
+     ><tmpl_var image_status></span>
+    <tmpl_unless images><b>none</b></tmpl_unless>
+    </p>
+    <ol><tmpl_loop images>
+      <li <tmpl_unless __ODD__>class="even"</tmpl_unless>>
+       <b><tmpl_if intref><a href="#<tmpl_var intref>"
+              title="Jump to detail for this page"></tmpl_if>
+        &lt;img
+        src=&quot;<tmpl_var name=link>&quot;
+        alt=&quot;<tmpl_unless no_text><tmpl_var name=text escape=HTML>
+        <tmpl_else><span class="red">NO TEXT IN 
+         ALT</span></tmpl_unless>&quot; /&gt;
+        <tmpl_if intref></a></tmpl_if></b>
+        (<tmpl_var ct>)<br />
+        <a href="<tmpl_var name=uri>" target="_blank"
+           title="Open this image in new window">
+        <tmpl_var name=uri></a> returned status 
+        <span <tmpl_unless status_ok>
+             class="red"<tmpl_else>class="green"</tmpl_unless>
+        ><tmpl_var status_tx></span>
+      </li></tmpl_loop>
+    </ol></tmpl_if>
+
+    <tmpl_if styles><p class="detaildt">
+    <b>Styles checked on this page: <tmpl_var style_cnt></b>
+    (<tmpl_var styles_ok> ok): <span
+    <tmpl_if style_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
+     ><tmpl_var style_status></span>
+    <tmpl_unless styles><b>none</b></tmpl_unless>
+    </p>
+    <ol><tmpl_loop styles>
+      <li <tmpl_unless __ODD__>class="even"</tmpl_unless>>
+       <b><tmpl_if intref><a href="#<tmpl_var intref>"
+              title="Jump to detail for this page"></tmpl_if>
+        &lt;link rel="stylesheet" type="<tmpl_var ct>"
+        href=&quot;<tmpl_var name=link>&quot; /&gt;
+        <tmpl_if intref></a></tmpl_if></b>
+        <br />
+        <a href="<tmpl_var name=uri>" target="_blank"
+           title="Open this style in new window">
+        <tmpl_var name=uri></a> returned status 
+        <span <tmpl_unless status_ok>
+             class="red"<tmpl_else>class="green"</tmpl_unless>
+        ><tmpl_var status_tx></span>; validation
+        <span class="<tmpl_if valid_ok>green<tmpl_else>red</tmpl_if>"
+        ><tmpl_var valid_tx></span>
+      </li></tmpl_loop>
+    </ol></tmpl_if>
+
+    <p><a href="#summary" title="Back to the summary">Summary</a></p>
+  </dd>
+</dl></tmpl_loop>
+
+    <hr />
+
+CheckSite (V<tmpl_var wcs_version>) took <tmpl_var spider_time> to
+collect the information and <tmpl_var report_time> to generate the
+report.<br />
+
+    <hr />
+      <p style="text-align: center;">
+        <tmpl_var name=copyright>
+      </p>
+  </body>
+</html>

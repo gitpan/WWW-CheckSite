@@ -1,0 +1,21 @@
+MANIFEST                    $Id: MANIFEST 286 2005-04-03 14:08:51Z abeltje $
+README
+Makefile.PL
+checksite
+lib/WWW/wcssummrpt.tmpl
+lib/WWW/wcsfullrpt.tmpl
+lib/WWW/CheckSite.pm
+lib/WWW/CheckSite/Spider.pm
+lib/WWW/CheckSite/Util.pm
+lib/WWW/CheckSite/Validator.pm
+t/00util.t
+t/01spider.t
+t/02spider.t
+t/10validator.t
+t/11validator.t
+t/20checksite.t
+t/docroot/imagebroken.html
+t/docroot/index.html
+t/docroot/linkbroken.html
+t/tsorg/tsorg.wcs
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -1,0 +1,14 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         WWW-CheckSite
+version:      0.013
+version_from: lib/WWW/CheckSite.pm
+installdirs:  site
+requires:
+    HTML::Template:                0
+    Time::HiRes:                   0
+    WWW::Mechanize:                1.08
+    WWW::RobotRules:               0
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.26
