@@ -1,0 +1,527 @@
+These changes are from the Subversion repository at
+        Url: http://source.test-smoke.org/repos/tools/checksite
+
+The filelists have a short symbolic indicator:
+        !  modified
+        +  added
+        -  deleted
+       !>  merged change
+       !<  replaced
+
+Enjoy!
+___________________________________________________________________________
+[   328] By: abeltje                          on 2005-05-16 12:12:17 +0200
+        Log: * [FIX]
+	       * some POD fixes
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   318] By: abeltje                          on 2005-04-30 13:11:12 +0200
+        Log: * Regenerate Changes for $version
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
+[   317] By: abeltje                          on 2005-04-30 13:09:24 +0200
+        Log: * Regenerate Changes for $version
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
+[   316] By: abeltje                          on 2005-04-30 12:43:15 +0200
+        Log: * Regenerate Changes for $version
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
+[   315] By: abeltje                          on 2005-04-30 12:23:03 +0200
+        Log: * [ADD]
+	       + Add the Changes file
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/Changes
+           ! /checksite/MANIFEST
+___________________________________________________________________________
+[   314] By: abeltje                          on 2005-04-30 12:18:39 +0200
+        Log: * [CHANGE]
+	       * Update version number
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/README
+___________________________________________________________________________
+[   313] By: abeltje                          on 2005-04-30 12:17:29 +0200
+        Log: * [CHANGE]
+	       * Create full paths with File::Path::mkpath() not just
+		 mkdir()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   312] By: abeltje                          on 2005-04-30 12:14:07 +0200
+        Log: * [CHANGE]
+	       * Reorganize/de-typo some POD
+	       * Use the new accessor $spider->current_agent()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   311] By: abeltje                          on 2005-04-30 12:12:17 +0200
+        Log: * [CHANGE]
+	       * Reorganize/de-typo some POD
+	       * integrate patches by Pete Sergeant:
+		 + Add an accessor current_agent()
+		 + Make inline Mechanize descendants possible
+	       + Add an accessor current_rrules()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   288] By: abeltje                          on 2005-04-03 16:29:31 +0200
+        Log: * [FIX]
+	       * minor POD error (thanks to Test::Pod)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[   287] By: abeltje                          on 2005-04-03 16:26:15 +0200
+        Log: * [CHANGE]
+	       * Some more POD
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite, /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   286] By: abeltje                          on 2005-04-03 16:08:51 +0200
+        Log: * [ADD]
+	       + Add a README
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/README
+           ! /checksite/MANIFEST
+___________________________________________________________________________
+[   285] By: abeltje                          on 2005-04-02 13:17:05 +0200
+        Log: * [CHANGE]
+	       * Switch to a new version of EU::MM, no need to worry about
+		 META.yml anymore
+		 - META.yml can go now
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/META.yml
+___________________________________________________________________________
+[   284] By: abeltje                          on 2005-04-02 13:12:40 +0200
+        Log: * [CHANGE]
+	       * Add some QA (POD) testing
+	       + Complete the POD
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t/pod_coverage.t, /checksite/t/pod_ok.t
+           ! /checksite/lib/WWW/CheckSite/Spider.pm,
+	     /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   283] By: abeltje                          on 2005-04-02 11:49:39 +0200
+        Log: * [CHANGE]
+	       * Clean up
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Makefile.PL
+___________________________________________________________________________
+[   282] By: abeltje                          on 2005-04-02 11:48:07 +0200
+        Log: * [FEATURE]
+	       + Add support for the --lang option
+		 * The useragent adds an Accept-Language header
+		 * Report the Accept-Language in the reports
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite, /checksite/lib/WWW/CheckSite/Spider.pm,
+	     /checksite/lib/WWW/CheckSite/Validator.pm,
+	     /checksite/lib/WWW/CheckSite.pm,
+	     /checksite/lib/WWW/wcsfullrpt.tmpl,
+	     /checksite/lib/WWW/wcssummrpt.tmpl
+___________________________________________________________________________
+[   280] By: abeltje                          on 2005-03-29 05:58:45 +0200
+        Log: * [CHANGE]
+	       + add check for stylesheets
+		 * do a HEAD request for --novalidate
+		 * do a GET request and validate css at JIGSAW.W3.ORG for
+		   --validate
+	       * some cosmetic changes to the reports
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm,
+	     /checksite/lib/WWW/CheckSite.pm,
+	     /checksite/lib/WWW/wcsfullrpt.tmpl,
+	     /checksite/lib/WWW/wcssummrpt.tmpl
+___________________________________________________________________________
+[   279] By: abeltje                          on 2005-03-20 21:36:09 +0100
+        Log: * [FIX]
+	       + add 'dir' switch to the load constructor
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[   278] By: abeltje                          on 2005-03-20 21:35:09 +0100
+        Log: * [CHANGE]
+	       + add support in the report for 'skipped: no robots
+		 allowed'
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm,
+	     /checksite/lib/WWW/wcsfullrpt.tmpl,
+	     /checksite/lib/WWW/wcssummrpt.tmpl
+___________________________________________________________________________
+[   277] By: abeltje                          on 2005-03-20 13:52:35 +0100
+        Log: * New version of WWW::CheckSite
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/META.yml
+___________________________________________________________________________
+[   276] By: abeltje                          on 2005-03-20 13:51:05 +0100
+        Log: * [CHANGE]
+	       + add a code for 'no robots allowed'
+	       * find_template() was too loud
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   275] By: abeltje                          on 2005-03-20 13:40:45 +0100
+        Log: * [FIX]
+	       * fix the strict_rules thing
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   274] By: abeltje                          on 2005-03-20 12:35:32 +0100
+        Log: * [CHANGE]
+	       + add some testing stuff
+	       * fix MANIFEST and Makefile.PL
+	       + add META.yml
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/META.yml, /checksite/t/11validator.t,
+	     /checksite/t/tsorg, /checksite/t/tsorg/tsorg.wcs
+           ! /checksite/MANIFEST, /checksite/Makefile.PL,
+	     /checksite/t/20checksite.t
+___________________________________________________________________________
+[   273] By: abeltje                          on 2005-03-20 12:33:39 +0100
+        Log: * [ADD]
+	       + add the wrapper script to WWW::CheckSite
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/checksite
+___________________________________________________________________________
+[   272] By: abeltje                          on 2005-03-20 12:30:50 +0100
+        Log: * [CHANGE]
+	       + add some more POD
+	       * fix the load() method
+	       + add support for 'strictrules'
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   271] By: abeltje                          on 2005-03-20 12:20:33 +0100
+        Log: * [CHANGE]
+	       + add some more POD
+	       + implement the 'strictrules' thing
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   270] By: abeltje                          on 2005-03-20 12:18:47 +0100
+        Log: * [CHANGE]
+	       + add the allowed() method to get to the robot rules
+	       * rework the uri_ok() method
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   269] By: abeltje                          on 2005-03-18 09:21:00 +0100
+        Log: * [ADD]
+	       * factor out all functionality from the main script
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   268] By: abeltje                          on 2005-03-18 08:39:22 +0100
+        Log: * [CHANGE]
+	       * add some colour and type-face
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/wcsfullrpt.tmpl,
+	     /checksite/lib/WWW/wcssummrpt.tmpl
+___________________________________________________________________________
+[   267] By: abeltje                          on 2005-03-16 16:02:06 +0100
+        Log: * [FIX]
+	       * Validation results got the wrong code
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   266] By: abeltje                          on 2005-03-16 15:59:28 +0100
+        Log: * [CHANGE]
+	       * Fix some robot-rules stuff
+	       * fix the agent string
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   264] By: abeltje                          on 2005-03-16 15:33:26 +0100
+        Log: * [CHANGE]
+	       * rename some tests
+	       + add some tests
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t/20checksite.t
+           - /checksite/t/01validator.t, /checksite/t/util.t
+          !> /checksite/t/00util.t =(/checksite/t/util.t:261),
+	     /checksite/t/10validator.t =(/checksite/t/01validator.t:261)
+___________________________________________________________________________
+[   263] By: abeltje                          on 2005-03-12 12:26:12 +0100
+        Log: * [CHANGE]
+	       * move the templates to the lib/WWW directory
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/wcsfullrpt.tmpl, /checksite/wcssummrpt.tmpl
+          !> /checksite/lib/WWW/wcsfullrpt.tmpl
+	     =(/checksite/wcsfullrpt.tmpl:261),
+	     /checksite/lib/WWW/wcssummrpt.tmpl
+	     =(/checksite/wcssummrpt.tmpl:261)
+___________________________________________________________________________
+[   261] By: abeltje                          on 2005-03-08 01:01:25 +0100
+        Log: * [CHANGE]
+	       * update the Makefile.PL for different info
+	       * update MANIFEST
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/MANIFEST, /checksite/Makefile.PL
+___________________________________________________________________________
+[   259] By: abeltje                          on 2005-03-08 00:56:41 +0100
+        Log: * [CHANGE]
+	       + Add a testfile for the Validator
+	       * Work some more on the Spider tests
+	       + Add some more tests for WWW::CheckSite::Util
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t/01validator.t
+           ! /checksite/t/01spider.t,
+	     /checksite/t/docroot/imagebroken.html, /checksite/t/util.t
+___________________________________________________________________________
+[   258] By: abeltje                          on 2005-03-08 00:52:40 +0100
+        Log: * [CHANGE]
+	       * Finish the POD
+	       * do some tweaking on the Spider
+	       + added the validation code for the Validator
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm,
+	     /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   257] By: abeltje                          on 2005-03-07 19:25:50 +0100
+        Log: * [CHANGE]
+	       * rename the files to normal use
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/t/spider.t, /checksite/t/spider02.t
+          !> /checksite/t/01spider.t =(/checksite/t/spider.t:256),
+	     /checksite/t/02spider.t =(/checksite/t/spider02.t:256)
+___________________________________________________________________________
+[   256] By: abeltje                          on 2005-03-07 19:24:13 +0100
+        Log: * [ADD]
+	       + new tests for WWW::CheckSite::Spider
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t/spider.t, /checksite/t/spider02.t
+___________________________________________________________________________
+[   255] By: abeltje                          on 2005-03-06 14:40:02 +0100
+        Log: * [REMOVE]
+	       * not needed anymore
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/cs2.pl
+___________________________________________________________________________
+[   254] By: abeltje                          on 2005-03-06 14:08:04 +0100
+        Log: * [CHANGE]
+	       * add some commandline options for testing
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/cs2.pl
+___________________________________________________________________________
+[   253] By: abeltje                          on 2005-03-06 14:06:21 +0100
+        Log: * [CHANGE]
+	       * Fix the Spider
+	       + Add the Validator (not finished)
+	       + Add the reworked script
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/checksite,
+	     /checksite/lib/WWW/CheckSite/Validator.pm
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   252] By: abeltje                          on 2005-03-06 14:02:13 +0100
+        Log: * [CHANGE]
+	       * rename the script to reflect it uses the iterater version
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/checksite
+          !> /checksite/checksiteIT =(/checksite/checksite:204)
+___________________________________________________________________________
+[   251] By: abeltje                          on 2005-03-06 14:00:04 +0100
+        Log: * [CHANGE]
+	       * Fix the references to the iterator versions of these
+		 modules
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSiteIT/Validator.pm,
+	     /checksite/lib/WWW/CheckSiteIT.pm
+___________________________________________________________________________
+[   250] By: abeltje                          on 2005-03-06 13:58:00 +0100
+        Log: * [CHANGE]
+	       - remove the "Valid XHTML 1.0" reference
+	       * adjust the copyright statement
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/wcsfullrpt.tmpl, /checksite/wcssummrpt.tmpl
+___________________________________________________________________________
+[   204] By: abeltje                          on 2004-09-19 23:34:32 +0200
+        Log: * [CHANGE]
+	       * rename the old implementation so we can do the new one
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/lib/WWW/CheckSiteIT
+           - /checksite/lib/WWW/CheckSite/Validator.pm,
+	     /checksite/lib/WWW/CheckSite.pm
+           ! /checksite/checksite
+          !> /checksite/lib/WWW/CheckSiteIT/Validator.pm
+	     =(/checksite/lib/WWW/CheckSite/Validator.pm:203),
+	     /checksite/lib/WWW/CheckSiteIT.pm
+	     =(/checksite/lib/WWW/CheckSite.pm:203)
+___________________________________________________________________________
+[   203] By: abeltje                          on 2004-09-17 12:47:24 +0200
+        Log: * [ADD]
+	       * Start this project from a different angle!
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/cs2.pl, /checksite/lib/WWW/CheckSite/Spider.pm,
+	     /checksite/lib/WWW/CheckSite/Util.pm, /checksite/t/util.t
+___________________________________________________________________________
+[   184] By: abeltje                          on 2004-04-22 00:10:29 +0200
+        Log: * [FIX]
+	       * the crosslinks between full and summary report wer
+		 fullpath
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[   183] By: abeltje                          on 2004-04-21 23:50:16 +0200
+        Log: * [CHANGE]
+	       * Make checksite generate both the full and the summary
+		 report
+	       ! rename the summary report to wcssummrpt.tmpl
+	       * the --template option now wants a sprintf() template
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/wcsreport.tmpl
+           ! /checksite/checksite, /checksite/wcsfullrpt.tmpl
+          !> /checksite/wcssummrpt.tmpl =(/checksite/wcsreport.tmpl:170)
+___________________________________________________________________________
+[   170] By: abeltje                          on 2004-04-14 00:05:05 +0200
+        Log: * [FIX]
+	       * Fixed various typo's
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[    98] By: abeltje                          on 2004-02-07 04:51:21 +0100
+        Log: * [CHANGE]
+	       * more stuff with the templates
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/checksite.tmpl, /checksite/checksitefull.tmpl
+           ! /checksite/checksite
+          !> /checksite/wcsfullrpt.tmpl
+	     =(/checksite/checksitefull.tmpl:96),
+	     /checksite/wcsreport.tmpl =(/checksite/checksite.tmpl:96)
+___________________________________________________________________________
+[    97] By: abeltje                          on 2004-02-07 04:50:02 +0100
+        Log: * [ADD]
+	       + add verbosity to the validator code
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[    96] By: abeltje                          on 2004-02-07 02:26:46 +0100
+        Log: * [MOVE]
+	       * rename the templates from "report*" to "checksite*"
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/report.tmpl, /checksite/reportfull.tmpl
+          !> /checksite/checksite.tmpl =(/checksite/report.tmpl:39),
+	     /checksite/checksitefull.tmpl
+	     =(/checksite/reportfull.tmpl:39)
+___________________________________________________________________________
+[    95] By: abeltje                          on 2004-02-07 02:25:40 +0100
+        Log: * [ADD]
+	       + code for verbosity
+	       * fixed a typo in the REVISION code
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[    94] By: abeltje                          on 2004-02-07 02:23:58 +0100
+        Log: * [FIX]
+	       * typo (should have been a syntax-error
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[    93] By: abeltje                          on 2004-02-07 02:20:39 +0100
+        Log: * [ADD]
+	       + prepare for testing...
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t, /checksite/t/docroot,
+	     /checksite/t/docroot/imagebroken.html,
+	     /checksite/t/docroot/index.html,
+	     /checksite/t/docroot/linkbroken.html
+___________________________________________________________________________
+[    92] By: abeltje                          on 2004-02-07 02:18:47 +0100
+        Log: * [ADD]
+	       + to PREREQ_PM: WWW::RobotRules HTML::Template
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Makefile.PL
+___________________________________________________________________________
+[    91] By: abeltje                          on 2004-02-06 23:35:00 +0100
+        Log: * [CHANGE]
+	       * change --validate_by=s to --by_upload and --by_uri
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[    40] By: abeltje                          on 2003-09-10 20:57:45 +0200
+        Log: * [ADD]
+	       * Files to start a distribution
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/MANIFEST, /checksite/Makefile.PL
+___________________________________________________________________________
+[    39] By: abeltje                          on 2003-09-10 20:35:27 +0200
+        Log: * [CHANGE] *big*
+	       + allmost rewrite checksite:
+		 + --save switch allows for the data to be stored
+		 + --load switch allows to build a new (different) report
+		     from saved data
+		 + --template allows to specify another HTML::Template
+	       * report.tmpl now only displays the stuff that is wrong
+	       * reportfull.tmpl still gives the full report
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite, /checksite/report.tmpl
+          !> /checksite/reportfull.tmpl =(/checksite/report.tmpl:30)
+___________________________________________________________________________
+[    38] By: abeltje                          on 2003-09-10 11:31:16 +0200
+        Log: * [ADD]
+	       + Added a way to *not* call the validator
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[    37] By: abeltje                          on 2003-09-09 17:25:30 +0200
+        Log: * [FIX]
+	       + eval{ } some of the URI stuff, be defensive
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[    33] By: abeltje                          on 2003-08-25 15:12:41 +0200
+        Log: * [ADD] a subclass of WWW::CheckSite
+	       + add a check for images on the page
+	       + adds W3-Validation information
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/lib/WWW/CheckSite,
+	     /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[    32] By: abeltje                          on 2003-08-25 15:07:45 +0200
+        Log: * [REWRITE]
+	       This is a total rewrite inspired by M-JD's "iterator and
+	       generator" class in Paris
+	       It is now only a spider, the validator has moved to
+	       WWW::CheckSite::Validator
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[    31] By: abeltje                          on 2003-08-23 03:17:24 +0200
+        Log: * [FIX] only use the returned uri after success
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[    30] By: abeltje                          on 2003-08-23 01:57:39 +0200
+        Log: * [CHANGE] just some minor stuff
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/report.tmpl
+___________________________________________________________________________
+[    29] By: abeltje                          on 2003-08-23 01:55:38 +0200
+        Log: * [FIX] it wasn't finished
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[    28] By: abeltje                          on 2003-08-22 21:29:32 +0200
+        Log: * [CHANGE] It is sort of restored
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/report.tmpl
+___________________________________________________________________________
+[    27] By: abeltje                          on 2003-08-22 19:52:51 +0200
+        Log: * already lost it once :(
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/report.tmpl
+___________________________________________________________________________
+[    14] By: abeltje                          on 2003-07-06 17:07:42 +0200
+        Log: * [IMPORT]
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/checksite, /checksite/lib, /checksite/lib/WWW,
+	     /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[    13] By: abeltje                          on 2003-07-06 16:53:33 +0200
+        Log: * [ADD] Create space for a new tool
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite
+
+-- Generated by 'svnchanges' (0.013) --

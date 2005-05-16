@@ -2,26 +2,45 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 284 2005-04-02 11:12:40Z abeltje $
+# $Id: Spider.pm 328 2005-05-16 10:12:17Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.006';
+$VERSION = '0.007';
 
 =head1 NAME
 
-WWW::CheckSite::Spider - Implement a base class for spidering
+WWW::CheckSite::Spider - A base class for spidering the web
 
 =head1 SYNOPSIS
 
     use WWW::CheckSite::Spider;
 
     my $sp = WWW::CheckSite::Spider->new(
-        ua_class => 'WWW::Mechanize', # or Win32:IE::Mechanize
-        uri      => 'http://www.test-smoke.org',
+         uri      => 'http://www.test-smoke.org',
     );
 
     while ( my $page = $sp->get_page ) {
-        # $page is a hashref with bais information
+        # $page is a hashref with basic information
     }
+
+or to spider a site behind HTTP basic authentication:
+
+    package BA_Mech;
+    use base 'WWW::Mechanize';
+
+    sub get_basic_credentials { ( 'abeltje', '********' ) }
+
+    package main;
+    use WWW::CheckSite::Spider;
+
+    my $sp = WWW::CheckSite::Spider->new(
+         ua_class => 'BA_Mech',
+         uri      => 'http://your.site.with.ba/',
+    );
+
+    while ( my $page = $sp->get_page ) {
+        # $page is a hashref with basic information
+    }
+
 
 =head1 DESCRIPTION
 
@@ -30,15 +49,12 @@ C<WWW::Mechanize>. It takes care of putting pages on the
 "still-to-fetch" stack. Only uri's with the same origin will be
 stacked, taking the robots-rules on the server into account.
 
-=head1 METHODS
-
 =cut
 
 use WWW::CheckSite::Util;
 use WWW::RobotRules;
 use URI;
 
-# Define some constants for the cache mechanism
 =head1 CONSTATNTS & EXPORTS
 
 The following constants ar exported on demand with the B<:const> tag.
@@ -68,22 +84,24 @@ sub WCS_TOSPIDER()  {   4 }
 sub WCS_NOCONTENT() {  64 }
 sub WCS_OUTSCOPE()  { 128 }
 
+use base 'Exporter';
 %EXPORT_TAGS = (
     const => [qw( WCS_UNKNOWN  WCS_FOLLOWED  WCS_SPIDERED
                   WCS_TOSPIDER WCS_NOCONTENT WCS_OUTSCOPE )],
 );
 @EXPORT_OK = map @{ $EXPORT_TAGS{ $_ } } => keys %EXPORT_TAGS;
-use base 'Exporter';
+
+=head1 METHODS
 
 =head2 WWW::CheckSite::Spider->new( %opts )
 
-Currently supported options (the rest will be passed!):
+Currently supported options (the rest will be set but not used!):
 
 =over 4
 
 =item * B<uri> => <start_uri> [mandatory]
 
-=item * B<au_class> => 'WWW::Mechanize' or 'Win32::IE::Mechanize'
+=item * B<ua_class> => by default L<WWW::Mechanize>
 
 =item * B<exclude> => <exclude_re> (qr/[#?].*$/)
 
@@ -95,7 +113,7 @@ Currently supported options (the rest will be passed!):
 
 =item * B<_self_base> => <my_base_to_use>
 
-=item * B<_norules> => true false
+=item * B<_norules> => perl_false 
 
 =end undocumented
 
@@ -109,11 +127,13 @@ sub new {
 
     $opts{uri} or do {
         require Carp;
-        Carp::croak( "No uri to spider specified!\n" );
+        Carp::croak( "No uri to spider specified!" );
     };
 
     $opts{_self_base} ||= $opts{uri};
     $opts{_self_base} =~ s|^(.+/)(.+\.s?html?)|$1|;
+    $opts{_self_base} = URI->new( $opts{_self_base} )->canonical->as_string;
+    $opts{uri} = URI->new( $opts{uri} )->canonical->as_string;
 
     defined $opts{exclude} or $opts{exclude} = '[#?].*$';
     defined $opts{myrules} or $opts{myrules} = [ ];
@@ -135,30 +155,10 @@ sub new {
     return $self;
 }
 
-=head2 get_page
+=head2 $spider->get_page
 
-Fetch the page and do some book keeping. It returns a hashref with
-some basic information:
-
-=over 4
-
-=item * B<org_uri> Used for the request
-
-=item * B<ret_uri> The uri returned by the server
-
-=item * B<depth> The depth in the browse tree
-
-=item * B<status> The return status from server
-
-=item * B<success> shortcut for status == 200
-
-=item * B<is_html> shortcut for ct eq 'text/html'
-
-=item * B<title> What's in the <TITLE></TITLE> section
-
-=item * B<ct> The content-type
-
-=back
+Fetch the page and do some book keeping. It returns the result of
+C<< $pider->process_page() >>.
 
 =cut
 
@@ -180,9 +180,13 @@ sub get_page {
     $self->_process( $uri );
 }
 
-=head2 _process
+=begin private
+
+=head2 $self->_process( $uri )
 
 Private method to help not requesting pages more than once.
+
+=end private
 
 =cut
 
@@ -190,25 +194,29 @@ sub _process {
     my $self = shift;
     my $uri  = shift;
 
-    my $mech = $self->{_agent};
+    my $mech = $self->current_agent;
     $self->{v} and print "Fetch: '$uri': ";
     $mech->get( $uri );
     $self->{v} and printf "done(%sok).\n", $mech->success ? '' : 'not ';
     $self->{_self_base} ||= $mech->base;
 
-    $self->update_stack( $uri );
+    $self->_update_stack( $uri );
 
     $self->process_page( $uri );
 }
 
-=head2 update_stack
+=begin private
+
+=head2 $self->_update_stack( $base )
 
 This is what the spider is all about. It will examine
-C<< $self->{_agent}->links() >> to filter the links to follow.
+C<< $self->current_agent->links() >> to filter the links to follow.
+
+=end private
 
 =cut
 
-sub update_stack {
+sub _update_stack {
     my( $self, $base ) = @_;
 
     my( $stack, $cache, $mech ) = @{ $self }{qw( _stack _cache _agent )};
@@ -237,16 +245,37 @@ sub update_stack {
     }
 }
 
-=head2 process_page( $uri )
+=head2 $spider->process_page( $uri )
 
-Override this method to make the spider do something useful.
+Override this method to make the spider do something useful. By
+default it returns:
+
+=over 4
+
+=item * B<org_uri> Used for the request
+
+=item * B<ret_uri> The uri returned by the server
+
+=item * B<depth> The depth in the browse tree
+
+=item * B<status> The return status from server
+
+=item * B<success> shortcut for status == 200
+
+=item * B<is_html> shortcut for ct eq 'text/html'
+
+=item * B<title> What's in the <TITLE></TITLE> section
+
+=item * B<ct> The content-type
+
+=back
 
 =cut
 
 sub process_page {
     my( $self, $uri ) = @_;
 
-    my $mech = $self->{_agent};
+    my $mech = $self->current_agent;
 
     my $use_uri = $mech->success ? $mech->uri : $uri;
     my $in_cache = $self->{_cache}->has( $use_uri );
@@ -267,7 +296,7 @@ sub process_page {
     return $stats;
 }
 
-=head2 links_filtered
+=head2 $spider->links_filtered
 
 Filter out the uri's that will fail:
 
@@ -279,23 +308,56 @@ sub links_filtered {
     my $self = shift;
     return grep {
         $_->url !~ m!^(?:mailto:|mms://|javascript:)!i
-    } $self->{_agent}->links;
+    } $self->current_agent->links;
 }
 
-=head1 UserAgent
+=head1 USERAGENT METHODS
 
-=head2 agent
+=head2 $spider->agent
 
 Retruns a standard name for this UserAgent.
 
 =cut
 
-sub agent { return (ref( shift) || __PACKAGE__) . "/$VERSION" }
+sub agent { return (ref(shift) || __PACKAGE__) . "/$VERSION" }
 
-=head2 init_agent
+=head2 $spider->init_agent
 
 Initialise the agent that is used to fetch pages. The default class is
 C<WWW::Mechanize> but any class that has the same methods will do.
+
+The C<ua_class> needs to support the following methods (see
+L<WWW::Mechanize> for more information about these):
+
+=over 4
+
+=item I<new>
+
+=item I<get>
+
+=item I<base>
+
+=item I<uri>
+
+=item I<status>
+
+=item I<success>
+
+=item I<ct>
+
+=item I<is_html>
+
+=item I<title>
+
+=item I<links>
+
+=item I<HEAD> (for L<WWW::CheckSite::Validtor>)
+
+=item I<content> (for L<WWW::CheckSite::Validtor>)
+
+=item I<images> (for L<WWW::CheckSite::Validtor>)
+
+=back
 
 =cut
 
@@ -304,7 +366,15 @@ sub init_agent {
     $self->{_agent} = $self->new_agent;
 }
 
-=head2 new_agent
+=head2 $spider->current_agent
+
+Return the current user agent.
+
+=cut
+
+sub current_agent { $_[0]->{_agent} }
+
+=head2 $spider->new_agent
 
 Create a new agent and return it.
 
@@ -314,7 +384,12 @@ sub new_agent {
     my $self = shift;
     $self->{ua_class} ||= 'WWW::Mechanize';
 
-    eval qq{ require $self->{ua_class}; };
+    # If the package we're using has been declared inline, we don't
+    # don't want to try and require it...
+    # 20050421: by Pete Sergeant
+    unless ( exists $::{ $self->{ua_class} . '::' } ) { 
+        eval qq/require $self->{ua_class}/;
+    }
     $@ and do {
         require Carp;
         Carp::croak( "Cannot initialise a UserAgent:\n$@" );
@@ -330,17 +405,17 @@ sub new_agent {
     return $ua;
 }
 
-=head1 Robot Rules
+=head1 ROBOTRULES METHODS
 
 The Spider uses the robot rules mechanism. This means that it will
-always get the F<robots.txt> file from the root of the webserver to
+always get the F</robots.txt> file from the root of the webserver to
 see if we are allowed (actually "not disallowed") to access pages as a
 robot.
 
 You can add rules for disallowing pages by specifying a list of lines
 in the F<robots.txt> syntax to C<< @{ $self->{myrules} } >>.
 
-=head2 uri_ok( $uri )
+=head2 $spider->uri_ok( $uri )
 
 This will determine whether this uri should be spidered. Rules are simple:
 
@@ -364,7 +439,7 @@ sub uri_ok {
 
     $self->{_uri_ok} = '';
     $self->{v} and print "  Check '$uri'";
-    $self->{_uri_ok} = 'scope'   unless $uri =~ /^$self->{_self_base}/i;
+    $self->{_uri_ok} = 'scope'   unless $uri =~ /^$self->{_self_base}/;
     $self->{_uri_ok} = 'pattern' if     $uri =~ m/$self->{exclude}/;
 
     $self->{_uri_ok} = 'robots'  unless $self->{_norules} ||
@@ -375,7 +450,7 @@ sub uri_ok {
     return !$self->{_uri_ok};
 }
 
-=head2 allowed( $uri )
+=head2 $spider->allowed( $uri )
 
 Checks the uri against the robotrules.
 
@@ -383,10 +458,10 @@ Checks the uri against the robotrules.
 
 sub allowed {
     my( $self, $uri ) = @_;
-    $self->{_r_rules}->allowed( $uri );
+    $self->current_rrules->allowed( $uri );
 }
 
-=head2 init_robotrules( )
+=head2 $spider->init_robotrules( )
 
 This will setup a <WWW::RobotRules> object. C<< @{$self->{myrules } >>
 is used to add rules and should be in the RobotRules format. These
@@ -407,7 +482,7 @@ sub init_robotrules {
     };
     $@ and do {
         require Carp;
-        Carp::croak( "Error in base-url: $@\n" );
+        Carp::croak( "Error in base-url: $@" );
     };
     $self->{v} and print "Robot rules: '$robots_uri': ";
 
@@ -426,6 +501,14 @@ sub init_robotrules {
 
     $self->{_r_rules} =  $rules;
 }
+
+=head2 $spider->current_rrules
+
+Returns the current RobotRules object.
+
+=cut
+
+sub current_rrules { $_[0]->{_r_rules} }
 
 =head1 AUTHOR
 

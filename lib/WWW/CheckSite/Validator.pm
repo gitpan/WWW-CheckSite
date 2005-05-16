@@ -2,13 +2,13 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 282 2005-04-02 09:48:07Z abeltje $
+# $Id: Validator.pm 312 2005-04-30 10:14:07Z abeltje $
 use vars qw( $VERSION );
-$VERSION = '0.006';
+$VERSION = '0.007';
 
 =head1 NAME
 
-WWW::CheckSite::Validator - Validate some of the html
+WWW::CheckSite::Validator - A spider that assesses 'kwalitee' for a site
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ src> >>) are checked for availability.
 
 =item * B<images>
 
-All images on the page (C<< <img src> >>, C<< <imput type=image> >>)
+All images on the page (C<< <img src> >>, C<< <input type=image> >>)
 are checked for availability.
 
 =item * B<stylesheets>
@@ -119,7 +119,7 @@ update the cache status for this link to prevent multiple HEADing.
 B<NOTE>: This method does B<not> respect the exclusion rules, and only
 robot-rules with C<strict_rules> enabled!
 
-The structure for linkss:
+The structure for links:
 
 =over 4
 
@@ -187,7 +187,7 @@ sub check_links {
 
 =head2 $wcs->check_images( $stats )
 
-The C<check_images()> method get information about the images on the
+The C<check_images()> method gets information about the images on the
 page. The list comes from the I<images()> method of the mechanize
 object. It will only C<HEAD> the uri.
 
@@ -345,8 +345,9 @@ The C<validate()> method sends the url/contents off to W3.org to validate.
 sub validate {
     my( $self, $stats ) = @_;
 
-    unless ( $self->{_agent}->success ) {
-        $self->{v} and print "Validate @{[$self->{_agent}->uri]}: skipped\n";
+    unless ( $self->current_agent->success ) {
+        $self->{v} and
+            print "Validate @{[$self->current_agent->uri]}: skipped\n";
         $stats->{valid} = undef;
         return $stats;
     }
@@ -378,8 +379,9 @@ Sends only the uri to W3.ORG and get the validation result.
 sub validate_by_uri {
     my( $self, $stats ) = @_;
 
-    my $val_uri = sprintf $VALIDATOR_URL, $self->{_agent}->uri;
-    $self->{v} and print "Validate @{[$self->{_agent}->uri]}: ";
+    my $val_uri = sprintf $VALIDATOR_URL, $self->current_agent->uri;
+    $self->{v} and
+        print "Validate @{[$self->current_agent->uri]}: ";
 
     my $ua = $self->new_agent;
     $self->{lang} and $ua->default_header( 'Accept-Language' => 'en' );

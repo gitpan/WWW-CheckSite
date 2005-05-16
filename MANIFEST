@@ -1,5 +1,6 @@
-MANIFEST                    $Id: MANIFEST 286 2005-04-03 14:08:51Z abeltje $
+MANIFEST                    $Id: MANIFEST 315 2005-04-30 10:23:03Z abeltje $
 README
+Changes
 Makefile.PL
 checksite
 lib/WWW/wcssummrpt.tmpl

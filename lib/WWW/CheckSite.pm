@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 287 2005-04-03 14:26:15Z abeltje $
-our $VERSION = '0.013';
+# $Id: CheckSite.pm 313 2005-04-30 10:17:29Z abeltje $
+our $VERSION = '0.014';
 
 =head1 NAME
 
@@ -52,6 +52,7 @@ use FindBin;
 use Storable qw( nstore retrieve );
 use File::Spec::Functions qw( :DEFAULT rel2abs );
 use File::Basename;
+use File::Path;
 use HTML::Template;
 use WWW::CheckSite::Validator;
 
@@ -162,7 +163,8 @@ sub validate {
     if ( $self->{save} ) {
         my $dir = $self->_datadir;
         unless ( -d $dir ) {
-            mkdir $dir or $self->_die( "Cannot mkdir($dir): $!" );
+            mkpath( $dir, $self->{v} ) or
+                $self->_die( "Cannot mkdir($dir): $!" );
         }
         nstore $self, $self->_datafile;
     }
@@ -258,13 +260,15 @@ sub write_report {
         # write the report
         my $dir = $self->_datadir;
         unless ( -d $dir ) {
-            mkdir $dir or $self->_die( "Cannot mkdir($dir): $!" );
+            mkpath( $dir, $self->{v} ) or
+                $self->_die( "Cannot mkdir($dir): $!" );
         }
         my $rptname = name_outfile( $self->_datadir, $type );
         open my $fh, "> $rptname" or
             $self->_die( "Cannot create($rptname): $!" );
         print $fh $report->output;
         close $fh or $self->_die( "Write error ($rptname): $!" );
+        $self->{v} and print "Finished writing '$rptname'\n";
     }
     return 1;
 }

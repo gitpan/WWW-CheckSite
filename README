@@ -1,11 +1,11 @@
-README for WWW::CheckSite 0.013
+README for WWW::CheckSite 0.014
 ===============================
-This program will spider the specified url and check the availability
-of the links, images and stylesheets on each page. Pages and
-stylesheets are also validated with the validators available at
+This program will spider from the specified url and check the
+availability of the links, images and stylesheets on each page. Pages
+and stylesheets are also validated with the validators available at
 http://validator.w3.org and http://jigsaw.w3.org.
 
-When all pages are checked two reports in HTML-format are
+When all pages are checked two 'kwalitee' reports in HTML-format are
 generated. The "full.html" report contains all the information for all
 pages and the "summ.html" report contains only the pages with errors
 and their errors.
@@ -14,7 +14,7 @@ PREREQUISITES
 =============
 This package needs:
 
-    * WWW::Mechanize (and LWP)
+    * WWW::Mechanize (and LWP, URI, WWW::RobotRules)
     * HTML::Template
 
 INSTALLATION
