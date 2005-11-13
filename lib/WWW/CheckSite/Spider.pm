@@ -2,9 +2,9 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 328 2005-05-16 10:12:17Z abeltje $
+# $Id: Spider.pm 431 2005-11-12 00:59:37Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.007';
+$VERSION = '0.011';
 
 =head1 NAME
 
@@ -228,7 +228,7 @@ sub _update_stack {
 
     my @candidates = $self->links_filtered;
 
-    my $new_base = $mech->base;
+    my $new_base = $mech->uri;
     foreach my $link ( @candidates ) {
         my $check = URI->new_abs( $link->url, $new_base )->as_string;
         my $data;
@@ -307,8 +307,24 @@ Filter out the uri's that will fail:
 sub links_filtered {
     my $self = shift;
     return grep {
-        $_->url !~ m!^(?:mailto:|mms://|javascript:)!i
+        my $url = $self->filter_link( $_->url );
+        ! defined $url
+            ? undef
+            : ( ($url eq $_->url and $_->url( $url )), $_ )
     } $self->current_agent->links;
+}
+
+=head2 $spider->filter_link( $uri )
+
+Return the URI to be spidered or C<undef> for skipping.
+
+=cut
+
+sub filter_link {
+    my( $self, $uri ) = @_;
+    return $uri =~ m!^(?:mailto:|mms://|javascript:)!i
+        ? undef
+        : $uri;
 }
 
 =head1 USERAGENT METHODS
@@ -385,10 +401,10 @@ sub new_agent {
     $self->{ua_class} ||= 'WWW::Mechanize';
 
     # If the package we're using has been declared inline, we don't
-    # don't want to try and require it...
+    # don't want to try and use it...
     # 20050421: by Pete Sergeant
     unless ( exists $::{ $self->{ua_class} . '::' } ) { 
-        eval qq/require $self->{ua_class}/;
+        eval qq{ use $self->{ua_class} };
     }
     $@ and do {
         require Carp;
@@ -509,6 +525,8 @@ Returns the current RobotRules object.
 =cut
 
 sub current_rrules { $_[0]->{_r_rules} }
+
+1;
 
 =head1 AUTHOR
 

@@ -2,9 +2,9 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 312 2005-04-30 10:14:07Z abeltje $
-use vars qw( $VERSION );
-$VERSION = '0.007';
+# $Id: Validator.pm 430 2005-11-10 09:26:44Z abeltje $
+use vars qw( $VERSION $VALIDATOR_URL $VALIDATOR_FRM $VALIDATOR_STYLE );
+$VERSION = '0.008';
 
 =head1 NAME
 
@@ -58,9 +58,11 @@ validation.
 
 use WWW::CheckSite::Spider qw( :const );
 use base 'WWW::CheckSite::Spider';
-our $VALIDATOR_URL   = 'http://validator.w3.org/check?uri=%s';
-our $VALIDATOR_FRM   = 'http://validator.w3.org/';
-our $VALIDATOR_STYLE = 'http://jigsaw.w3.org/css-validator/';
+BEGIN {
+    $VALIDATOR_URL   = 'http://validator.w3.org/check?uri=%s';
+    $VALIDATOR_FRM   = 'http://validator.w3.org/';
+    $VALIDATOR_STYLE = 'http://jigsaw.w3.org/css-validator/';
+}
 
 =head2 $wcs->process_page
 
@@ -149,7 +151,7 @@ sub check_links {
 
     my @checked;
     for my $link ( @links ) {
-        my $check = URI->new_abs( $link->url, $mech->base );
+        my $check = URI->new_abs( $link->url, $mech->uri );
         my $in_cache = $cache->has( $check );
         unless ( $in_cache && defined $in_cache->[1] ) {
             if ( $self->{strict_rules} && !$self->allowed( $check ) ) {
@@ -367,7 +369,7 @@ The fallback do-not-validate method.
 
 sub validate_by_none {
     my( $self, $stats ) = @_;
-    $stats->{valid} = undef;
+    $stats->{valid} = -1;
 }
 
 =head2 $wcs->validate_by_uri
@@ -380,15 +382,14 @@ sub validate_by_uri {
     my( $self, $stats ) = @_;
 
     my $val_uri = sprintf $VALIDATOR_URL, $self->current_agent->uri;
-    $self->{v} and
-        print "Validate @{[$self->current_agent->uri]}: ";
+    $self->{v} and print "HTML-Validate $val_uri: ";
 
     my $ua = $self->new_agent;
     $self->{lang} and $ua->default_header( 'Accept-Language' => 'en' );
     $ua->get( $val_uri );
 
     $stats->{valid} = $ua->success
-        ? $ua->content =~ /This Page Is Valid/ ? '1' : '-1' : undef;
+        ? $ua->content =~ /This Page Is Valid/ : '-1';
     $self->{v} and printf "done(%sok)\n", $stats->{valid} == 1 ? "" : "not ";
 
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );
@@ -415,7 +416,7 @@ sub validate_by_upload {
     print $fh $mech->content;
     close $fh;
 
-    $self->{v} and printf "Validate_upl(%s): %s ", $filename, $mech->uri;
+    $self->{v} and printf "HTML-Validate_upl(%s): %s ", $filename, $mech->uri;
     $stats->{validate} = $filename;
 
     my $ua = $self->new_agent;
@@ -456,7 +457,7 @@ The fallback do-not-validate-stylesheet method.
 =cut
 
 sub style_by_none {
-    return undef;
+    return -1;
 }
 
 =head2 $wcs->style_by_uri( $ua )
@@ -469,7 +470,7 @@ sub style_by_uri {
     my( $self, $ua ) = @_;
 
     my $uri = $ua->uri;
-    $self->{v} and print "CSS-Validate $uri: ";
+    $self->{v} and print "CSS-Validate $VALIDATOR_STYLE?$uri: ";
     $self->{lang} and $ua->default_header( 'Accept-Language' => 'en' );
     $ua->get( $VALIDATOR_STYLE );
     $ua->submit_form(
@@ -478,8 +479,8 @@ sub style_by_uri {
     );
 
     my $valid = $ua->success
-        ? $ua->content =~ /This document validates as /
-            ? '1' : '-1' : undef;
+        ? $ua->content =~ /This document validates as / : -1;
+
     $self->{v} and printf "done(%sok)\n", $valid == 1 ? "" : "not ";
 
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );

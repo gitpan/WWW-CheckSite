@@ -1,9 +1,9 @@
 package WWW::CheckSite::Util;
 use strict;
 
-# $Id: Util.pm 203 2004-09-17 10:47:24Z abeltje $
+# $Id: Util.pm 428 2005-11-10 09:13:25Z abeltje $
 use vars qw( $VERSION @EXPORT );
-$VERSION = '0.001';
+$VERSION = '0.002';
 
 =head1 NAME
 
@@ -13,7 +13,7 @@ WWW::CheckSite::Util - provide utilities for WWW::CheckSite
 
     use WWW::CheckSite::Util;
 
-    my $cache = new_cash;
+    my $cache = new_cashe;
 
     my $data;
     if ( $data = $cache->has( $key ) ) { # $data is a *copy*

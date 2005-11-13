@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+[% USE HTML %]
+  <head>
+    <!-- $Id: wcsfullrpt.tt 432 2005-11-13 10:31:47Z abeltje $ -->
+    <meta http-equiv="Content-type"
+          content="text/html; charset=iso-8859-1" />
+    <title>WWW::CheckSite full report</title>
+    <style type="text/css">
+<!--
+body      { background-color: #CCF; font-family: sans serif; }
+.even     { background-color: #BBF; }
+.red      { color: #F00; font-weight: bold; }
+.green    { color: #090; font-weight: bold; }
+dd ol li  { font-size: smaller;             }
+-->
+    </style>
+  </head>
+  <body>
+    <h1>CheckSite report for [% HTML.escape( url ) -%]</h1>
+    <h2>[% HTML.escape( title ) -%]</h2>
+<a name="summary"></a>
+Generated: [% now_time %]<br />
+See also: <a href="[% summlink %]" title="Errors report">Errors
+only</a><br />
+
+[% IF strict_rules -%]WWW::CheckSite ran with <b>--strictrules</b>
+<br />
+[% END %]
+
+[% IF language -%]Accept-Language: <b>[% language %]</b>
+<br />
+[% END %]
+
+    <hr />
+    <h2>Summary</h2>
+    <hr />
+    Checked [% page_cnt %] pages.<br />
+    [% IF did_validate %]
+      [% valid_ok %] pages out of
+      [% valid_cnt %] validated ok at W3.
+    [% ELSE %]
+      W3 validation was skipped.
+    [% END %]
+    <br />
+
+[% SET iseven = 1 %]
+<ol>[% FOREACH pg = pages %]
+  <li[% IF iseven %]
+     class="even" [% SET iseven = 0 %]
+  [% ELSE %]
+     [% SET iseven = 1 %]
+  [% END %]>
+
+    <a href="#[% pg.intref %]"
+       title="Details for &quot;[% HTML.escape( pg.title ) %]&quot;"
+    >[% HTML.escape( pg.title ) %]</a>
+    (returned <span class="[% IF pg.status_ok %]green[% ELSE %]red[% END %]"
+     >[% pg.status_tx %]</span>; W3 validation
+     <span class="[% IF pg.valid %]green[% ELSE %]red[% END %]"
+     >[% pg.valid_tx %]</span>
+    )<br />
+
+    [% IF pg.link_cnt %]This page had [% pg.link_cnt %] links checked;
+      [% pg.links_ok %] successfully followed:
+      <span class="[% IF pg.link_status_ok %]green[% ELSE %]red[% END %]"
+           >[% pg.link_status %]</span><br />[%END %]
+
+    [% IF pg.image_cnt %]This page had [% pg.image_cnt %] images checked;
+      [% pg.images_ok %] successfully loaded:
+      <span class="[% IF pg.image_status_ok %]green[% END %]red[% END %]"
+           >[% IF pg.image_status %]</span><br />
+    [% END %]
+
+    [% IF pg.style_cnt %]This page had [% pg.style_cnt %] styles checked;
+      [% pg.styles_ok %] successfully loaded:
+      <span class="[% IF pg.style_status_ok %]green[% ELSE %]red[% END %]"
+           >[% pg.style_status %]</span>; [% pg.vstyles_ok %] css-validated
+    [% END %]</li>
+[% END %]</ol>
+
+     <hr />
+    <h2>Details</h2>
+
+[% SET iseven = 1 %]
+[% FOREACH pg = pages %]
+<hr /><dl>
+  <dt class="detaildt"><a name="[% pg.intref %]"></a>
+    <a href="[% pg.uri %]" target="_blank"
+       title="Open this page in a new window">
+    [% HTML.escape( pg.uri ) %]</a> returned status 
+   <span class="[% IF pg.status_ok %]green[% ELSE %]red[% END %]"
+     >[% pg.status_tx %]</span>
+  </dt>
+  <dd>
+    <p>
+    Title: <b>[% HTML.escape( pg.title ) %]</b><br />
+    Content-type: [% pg.ct %]<br />
+    <a href="http://validator.w3.org/check?uri=[% pg.uri %]"
+       title="Run W3 validation on this page" target="_blank">
+    W3 validation</a>:
+    <span class="[% IF pg.valid %]green[% ELSE %]red[% END %]"
+     >[% pg.valid_tx %]</span><br />
+    Depth: [% pg.depth %]
+    </p>
+    [% IF pg.links %]
+      <p class="detaildt">
+        <b>Links checked on this page:
+        [% pg.link_cnt %]</b> ([% pg.links_ok %] ok
+         [%- IF pg.links_sk %]; [% pg.links_sk %] skipped[% END %]):
+        <span class="[% IF pg.link_status_ok %]green[% ELSE %]red[% END %]"
+           >[% pg.link_status %]</span>
+      </p>
+      [% SET notodd = 1 %]
+      <ol>[% FOREACH li = pg.links %]
+        <li [% IF notodd %]class="even"[% SET notodd = 0 %]
+            [% ELSE %][% SET notodd = 1 %][% END %]
+           ><a href="[% li.uri %]" target="_blank"
+               title="Open this page in new window">[% li.uri %]</a>
+          returned status 
+          <span class="[% IF li.status_ok %]green[% ELSE %]red[% END %]"
+               >[% li.status_tx %]</span><br />
+
+       <b>[% IF li.intref %]<a href="#[% li.intref %]"
+            title="Jump to detail for this page">
+       [% END %]
+       [% IF li.type_area %]&lt;area
+          href=&quot;[% li.link %]&quot;
+          alt=&quot;<span
+                class="[% IF li.no_text %]red[% ELSE %]green[% END %]"
+                >[% li.text %]</span>&quot; /&gt;[% IF li.intref %]</a>[% END %]
+      [% ELSE %]&lt;a
+        href=&quot;[% li.link %]&quot;&gt;<span
+              class="[% IF no_text %]red[% ELSE %]green[% END %]"
+              >[% li.text %]</span>&lt;/a&gt;
+      [% END %]
+      [% IF li.intref %]</a>[% END %]
+      </b>
+
+   <br />
+
+      </li>[% END %]
+    </ol>
+  [% ELSE %]
+    <p class="detaildt">
+      <b>Links checked on this page: none</b>
+    </p>
+  [% END %]
+
+  [% IF pg.images %]<p class="detaildt">
+    <b>Images checked on this page: [% pg.image_cnt %]</b>
+    ([% pg.images_ok %] ok): <span
+        class="[% IF pg.image_status_ok %]green[% ELSE %]red[% END %]"
+        >[% pg.image_status %]</span>
+     </p>
+    [% SET notodd = 1 %]
+    <ol>[% FOREACH img = pg.images %]
+      <li [% IF notodd %]class="even"[% SET notodd = 0 %]
+          [% ELSE %][% SET notodd = 1 %][% END %]
+        ><a href="[% img.uri %]" target="_blank"
+           title="Open this image in new window">
+        [% HTML.escape( img.uri ) %]</a> returned status 
+        <span class="[%IF img.status_ok %]green[% ELSE %]red[% END %]"
+             >[% img.status_tx %]</span><br />
+        <b>&lt;img src=&quot;[% HTML.escape( img.link ) %]&quot;
+             alt=&quot;<span
+               [% IF img.no_text %]class="red"
+                    >NO TEXT IN ALT
+               [% ELSE %]class="green"
+                    >[% HTML.escape( img.text ) %]
+               [% END %]</span>&quot; /&gt;</b>
+        ([% img.ct %])
+      </li>
+    [% END %]
+    </ol>
+  [% ELSE %]
+    <p class="detaildt">
+      <b>Images checked on this page: none</b>
+    </p>
+  [% END %]
+
+  [% IF pg.styles %]<p class="detaildt">
+    <b>Styles checked on this page: [% pg.style_cnt %]</b>
+    ([% pg.styles_ok %] ok): <span
+         class="[% IF pg.tyle_status_ok %]green[% ELSE %]red[% END %]"
+    >[% pg.style_status %]</span>
+    [% IF ! pg.styles %]<b>none</b>[% END %]
+    </p>
+    [% SET notodd = 1 %]
+    <ol>[% FOREACH st = pg.styles %]
+      <li [% IF notodd %]class="even"[% SET nootodd = 0 %][% ELSE %]
+          [% SET notodd = 1 %][%END %]
+       ><a href="[% st.uri %]" target="_blank"
+           title="Open this style in new window">
+        [% HTML.escape( st.uri ) %]</a> returned status 
+        <span class="[% IF st.status_ok %]green[% ELSE %]red[% END %]"
+             >[% st.status_tx %]</span>; validation
+        <span class="[% IF st.valid_ok %]green[% ELSE %]red[% END %]"
+            >[% st.valid_tx %]</span>
+       <br />
+       <b>&lt;link rel="stylesheet" type="[% st.ct %]"
+        href=&quot;[% HTML.escape( st.link ) %]&quot; /&gt;</b>
+      </li>
+    [%END %]
+    </ol>
+  [% ELSE %]
+    <p class="detaildt">
+      <b>Stylesheets checked on this page: none</b>
+    </p>
+  [% END %]
+
+    <p><a href="#summary" title="Back to the summary">Summary</a></p>
+  </dd>
+</dl>
+[% END %]
+
+    <hr />
+
+CheckSite (V[% wcs_version %]) took [% spider_time %] to
+collect the information and [% report_time %] to generate the
+report.<br />
+
+    <hr />
+    <p style="text-align: center;">[% copyright %]</p>
+  </body>
+</html>

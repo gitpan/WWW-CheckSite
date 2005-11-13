@@ -1,10 +1,12 @@
-MANIFEST                    $Id: MANIFEST 315 2005-04-30 10:23:03Z abeltje $
+MANIFEST                    $Id: MANIFEST 432 2005-11-13 10:31:47Z abeltje $
 README
 Changes
 Makefile.PL
 checksite
 lib/WWW/wcssummrpt.tmpl
+lib/WWW/wcssummrpt.tt
 lib/WWW/wcsfullrpt.tmpl
+lib/WWW/wcsfullrpt.tt
 lib/WWW/CheckSite.pm
 lib/WWW/CheckSite/Spider.pm
 lib/WWW/CheckSite/Util.pm

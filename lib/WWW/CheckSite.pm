@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 313 2005-04-30 10:17:29Z abeltje $
-our $VERSION = '0.014';
+# $Id: CheckSite.pm 432 2005-11-13 10:31:47Z abeltje $
+our $VERSION = '0.015';
 
 =head1 NAME
 
@@ -47,13 +47,13 @@ site, the validator does not! Use this tool only on your own sites.
 
 =cut
 
-BEGIN { eval { use Time::HiRes qw( time ); } }
+BEGIN { eval qq{ use Time::HiRes qw( time ); } }
 use FindBin;
 use Storable qw( nstore retrieve );
 use File::Spec::Functions qw( :DEFAULT rel2abs );
 use File::Basename;
 use File::Path;
-use HTML::Template;
+
 use WWW::CheckSite::Validator;
 
 =head2 WWW::CheckSite->new( %args )
@@ -73,6 +73,29 @@ Initialize a new instance. Options supported:
 =item * B<strictrules> => true/false (false)
 
 =item * B<validate> => by_none/by_uri/by_upload (by_none)
+
+=item * B<ua_class> => override the user agent class
+
+=item * B<ua_args> => hashref with extra options passed to the user agent class
+
+=item * B<v> => I<$verbosity>, where I<$verbosity> may be
+
+=over
+
+=item 0
+
+Be quiet (default).
+
+=item 1
+
+Report basic information for every visited page (e.g. number of links
+and images) and total time for checking the site.
+
+=item 2
+
+Additional reporting of page validation details.
+
+=back
 
 =back
 
@@ -135,12 +158,14 @@ sub validate {
     my $self = shift;
 
     my $wcs = WWW::CheckSite::Validator->new(
-        uri           => $self->{uri},
-        exclude_rules => $self->{exclude},
-        validate      => $self->{validate},
-        strict_rules  => $self->{strictrules},
-        lang          => $self->{lang},
-        v             => $self->{v} > 1,
+        uri         => $self->{uri},
+        ua_class    => $self->{ua_class},
+        ua_args     => $self->{ua_args},
+        exclude     => $self->{exclude},
+        validate    => $self->{validate},
+        strictrules => $self->{strictrules},
+        lang        => $self->{lang},
+        v           => $self->{v} > 1,
     );
 
     my( $cnt, $intref ) = ( 0, 'a' );
@@ -168,6 +193,26 @@ sub validate {
         }
         nstore $self, $self->_datafile;
     }
+}
+
+=head2 $wcs->dump_links
+
+Return a list with all URLs encountered during site-traversal.
+
+=cut
+
+sub dump_links {
+    my $self = shift;
+
+    my %seen;
+    for my $url ( keys %{ $self->{report} } ) {
+        $seen{ $url }++;
+        for my $link ( @{ $self->{report}{ $url }{links} } ) {
+            $seen{ $link->{uri} }++;
+        }
+    }
+
+    return sort keys %seen;
 }
 
 =begin private
@@ -240,6 +285,31 @@ Generate the reports.
 sub write_report {
     my $self = shift;
 
+    # first check if we have Template Toolkit
+    eval qq{use Template};
+    return $self->write_tt_report unless $@;
+
+    # then check for HTML::Template
+    eval qq{use HTML::Template};
+    return $self->write_ht_report unless $@;
+
+    $self->_die( "No supported template system found" );
+}
+
+=head2 $wcs->write_ht_report()
+
+Load, fill the L<HTML::Template> template and write the reports.
+
+=cut
+
+sub write_ht_report {
+    my $self = shift;
+
+    my $dir = $self->_datadir;
+    unless ( -d $dir ) {
+        mkpath( $dir, $self->{v} ) or $self->_die( "Cannot mkdir($dir): $!" );
+    }
+
     for my $type (qw( summ full )) {
         $self->{rstart} = time;
         my $report = create_report( "wcs${type}rpt.tmpl",
@@ -258,17 +328,58 @@ sub write_report {
         );
 
         # write the report
-        my $dir = $self->_datadir;
-        unless ( -d $dir ) {
-            mkpath( $dir, $self->{v} ) or
-                $self->_die( "Cannot mkdir($dir): $!" );
-        }
         my $rptname = name_outfile( $self->_datadir, $type );
         open my $fh, "> $rptname" or
             $self->_die( "Cannot create($rptname): $!" );
         print $fh $report->output;
         close $fh or $self->_die( "Write error ($rptname): $!" );
         $self->{v} and print "Finished writing '$rptname'\n";
+    }
+    return 1;
+}
+
+=head2 $wcs->write_tt_report()
+
+Load, fill the L<Template> Toolkit template and write the reports.
+
+=cut
+
+sub write_tt_report {
+    my $self = shift;
+
+    my $dir = $self->_datadir;
+    unless ( -d $dir ) {
+        mkpath( $dir, $self->{v} ) or
+            $self->_die( "Cannot mkdir($dir): $!" );
+    }
+
+    my $data = create_report_data( 'all',
+                                   @{ $self }{qw( uri by_depth report v )} );
+    for my $type (qw( summ full )) {
+        my $tt_name = "wcs${type}rpt.tt";
+        $self->{rstart} = time;
+        my $report = Template->new({
+            INCLUDE_PATH => dirname( find_tmpl( $tt_name, $self->{v} ) ),
+            POST_CHOMP => 1,
+            EVAL_PERL  => 1,
+        });
+        $self->{rfinish} = time;
+        $report->process( $tt_name, {
+            ( map +( $_ => $self->{ $_ } ) => qw( uri by_depth report v ) ),
+            ( map +( $_ => $data->{ $_ } ) => keys %$data ),
+
+            spider_time  => $self->_spider_time,
+            report_time  => $self->_report_time,
+            now_time     => scalar localtime,
+            did_validate => ($self->{validate} =~ /by_(?:upload|uri)/ ? 1 : 0),
+            strict_rules => $self->{strictrules},
+            language     => $self->{lang},
+            summlink     => basename( name_outfile( $self->_datadir, 'summ' ) ),
+            fulllink     => basename( name_outfile( $self->_datadir, 'full' ) ),
+        },
+            name_outfile( $self->_datadir, $type ),
+        ) || $self->_die( $report->error );
+
     }
     return 1;
 }
@@ -285,14 +396,36 @@ sub _die {
     Carp::croak( @_ );
 }
 
-
 =head1 NO METHODS
 
 =head2 create_report()
 
+Load and fill the L<HTML::Template>.
+
 =cut
 
 sub create_report {
+    my( $tmplnm, $url, $by_depth, $report, $v ) = @_;
+
+    my $data = create_report_data( $tmplnm, $url, $by_depth, $report, $v );
+
+    my $tmpl = HTML::Template->new(
+        filename => find_tmpl( $tmplnm, $v ),
+        loop_context_vars => 1,
+        die_on_bad_params => 0,
+    );
+    $tmpl->param( %$data );
+    return $tmpl;
+}
+
+=head2 create_report_data()
+
+Return a hash with all the data needed to fill both the
+L<HTML::Template> and the L<Template> Toolkit templates.
+
+=cut
+
+sub create_report_data {
     my( $tmplnm, $url, $by_depth, $report, $v ) = @_;
 
     my %data = ( url => $url, title => $report->{ $url }{title},
@@ -325,7 +458,7 @@ sub create_report {
                 $_->{status_sk} = $_->{status} == 999;
                 exists $_->{valid} and
                     $_->{status_ok} &&= (defined $_->{valid}
-                                             ? $_->{valid} == 1 ? 1 : 0 : 1);
+                                             ? $_->{valid} == 1 ? 1 : 1 : 0);
                 $pinfo->{all_ok} &&= ( $_->{status_ok} || $_->{status_sk} );
 
                 $_->{text} =~ s/>No text in TAG</>No text in $_->{tag}</
@@ -337,7 +470,7 @@ sub create_report {
                     $_->{status_sk} and $pinfo->{styles_sk}++;
                     $pinfo->{all_styles_ok} &&= $_->{link_ok};
                     $_->{valid_tx} = defined $_->{valid}
-                        ? $_->{valid} == 1 ? 'ok' : 'not ok' : 'skipped';
+                        ? $_->{valid} == 1 ? 'ok' : 'skipped' : 'not ok';
                     $_->{valid_ok} = defined $_->{valid}
                         ? $_->{valid} == 1 ? 1 : 0 : 0;
                 } elsif ( exists $_->{ct} ) { # this is an image
@@ -350,7 +483,7 @@ sub create_report {
             }
 
             $pinfo->{valid_tx} = defined $pinfo->{valid}
-                ? $pinfo->{valid} ? 'ok' : 'not ok' : 'skipped';
+                ? $pinfo->{valid} == 1 ? 'ok' : 'skipped' : 'not ok';
             defined $pinfo->{valid} and $pinfo->{all_ok} &&= $pinfo->{valid};
 
             $pinfo->{link_cnt} and $pinfo->{link_status_ok} =
@@ -388,19 +521,11 @@ sub create_report {
         }
     }
 
-    $data{page_cnt} = scalar @{ $data{pages} };
+    $data{page_cnt}    = scalar @{ $data{pages} };
+    $data{copyright}   = '&copy; MMV Abe Timmerman &lt;abeltje@cpan.org&gt;';
+    $data{wcs_version} = $VERSION;
 
-    my $tmpl = HTML::Template->new(
-        filename => find_tmpl( $tmplnm, $v ),
-        loop_context_vars => 1,
-        die_on_bad_params => 0,
-    );
-    $tmpl->param( %data,
-        copyright   => '&copy; MMV Abe Timmerman &lt;abeltje@cpan.org&gt;',
-        wcs_version => $VERSION,
-    );
-
-    return $tmpl;
+    return \%data;
 }
 
 =begin private

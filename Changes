@@ -10,6 +10,68 @@ The filelists have a short symbolic indicator:
 
 Enjoy!
 ___________________________________________________________________________
+[   432] By: abeltje                          on 2005-11-13 11:31:47 +0100
+        Log: * [CHANGE] some by Slaven Rezic [SR]
+	       + add support for TT
+	       + add support for different HTML-Validator url(mask)
+	       + add support for 'ua_class' and 'ua_args' to
+		 WWW::CheckSite::validate() [SR]
+	       + add documentation for the 'v' option in
+		 WWW::CheckSite::validate() [SR]
+	       + add WWW::CheckSite::dump_links() [request by Jens
+		 Stavnstrup]
+	       * do some refactoring to help TT support
+	       * fix inconsistency with Valid/Not Valid/Skipped
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/lib/WWW/wcsfullrpt.tt,
+	     /checksite/lib/WWW/wcssummrpt.tt
+           ! /checksite/MANIFEST, /checksite/checksite,
+	     /checksite/lib/WWW/CheckSite.pm, /checksite/t/20checksite.t
+___________________________________________________________________________
+[   431] By: abeltje                          on 2005-11-12 01:59:37 +0100
+        Log: * [CHANGE]
+	       * use() the ua_class instead of require() (helps 5.8.0)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   430] By: abeltje                          on 2005-11-10 10:26:44 +0100
+        Log: * [CHANGE]
+	       * fix the base bug
+	       * fix valid/not valid/skipped inconsistency
+	       * better diagnostics for verbose
+	       * factor out the validation urls in order to override them
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   429] By: abeltje                          on 2005-11-10 10:17:36 +0100
+        Log: * [FIX]
+	       * bug with base (don't use base, but the uri it self)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   428] By: abeltje                          on 2005-11-10 10:13:25 +0100
+        Log: * [FIX]
+	       * Fix docu typo (by Slaven Rezic)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Util.pm
+___________________________________________________________________________
+[   413] By: abeltje                          on 2005-09-06 00:36:02 +0200
+        Log: * [CHANGE]
+	       + split links_filtered() to call the filter_link() method
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   331] By: abeltje                          on 2005-05-16 17:13:54 +0200
+        Log: * [FIX] by Pete Sergeant
+	       + Add the "1;" at the end of the code
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   329] By: abeltje                          on 2005-05-16 12:13:29 +0200
+        Log: * Regenerate Changes for WWW::CheckSite 0.014
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
 [   328] By: abeltje                          on 2005-05-16 12:12:17 +0200
         Log: * [FIX]
 	       * some POD fixes
