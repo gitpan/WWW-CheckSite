@@ -1,0 +1,23 @@
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<!--
+
+This page should have a broken link.
+
+ -->
+  <head>
+    <!-- $Id -->
+    <meta http-equiv="Content-type"
+          content="text/html; charset iso-8859-1" />
+    <title>"Broken Area" testpage for WWW::CheckSite</title>
+  </head>
+  <body>
+    <img src="dot.gif" alt="SingleDot" usemap="#broken" />
+    <map name="broken">
+      <area shape="rect" coords="0,0,1,1" href="doesnotexist.html"
+            alt="one-dot-click" />
+    </map>
+  </body>
+</html>

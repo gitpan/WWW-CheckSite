@@ -1,9 +1,13 @@
 #! perl -w
 use strict;
-use FindBin;
 
-# $Id: 01spider.t 259 2005-03-07 23:56:41Z abeltje $
+# $Id: 01spider.t 440 2005-12-04 16:11:04Z abeltje $
 use Test::More tests => 10;
+
+use File::Spec::Functions qw( :DEFAULT rel2abs );
+use File::Basename;
+my $findbin;
+BEGIN { $findbin = rel2abs dirname $0 }
 
 my $verbose = $ENV{WCS_VERBOSE} || 0;
 BEGIN { use_ok 'WWW::CheckSite::Spider', ':const' }
@@ -24,7 +28,7 @@ ok exists &WCS_OUTSCOPE,  "WCS_OUTSCOPE";
 
 {
     my $sp = WWW::CheckSite::Spider->new(
-        { v => $verbose, uri => "file://$FindBin::Bin/docroot/index.html" }
+        { v => $verbose, uri => "file://$findbin/docroot/index.html" }
     );
     isa_ok $sp, 'WWW::CheckSite::Spider';
 }

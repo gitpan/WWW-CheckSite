@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <!-- $Id: wcssummrpt.tmpl 282 2005-04-02 09:48:07Z abeltje $ -->
+    <!-- $Id: wcssummrpt.tmpl 450 2006-01-02 01:55:45Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
     <title>WWW::CheckSite errors report</title>
@@ -108,7 +108,7 @@ Pages with some problem: <tmpl_var not_ok_cnt><br />
     </p>
 
     <tmpl_unless all_links_ok><ol><tmpl_loop links>
-      <tmpl_unless link_ok><li>
+      <tmpl_unless link_ok><tmpl_unless link_sk><li>
        <b><tmpl_if intref><a href="#<tmpl_var intref>"
               title="Jump to detail for this page"></tmpl_if>
 <tmpl_if type_area>&lt;area href=&quot;<tmpl_var name=link>&quot;
@@ -129,7 +129,7 @@ Pages with some problem: <tmpl_var not_ok_cnt><br />
         <span <tmpl_unless status_ok>
              class="red"<tmpl_else>class="green"</tmpl_unless>
         ><tmpl_var status_tx></span>
-      </li></tmpl_unless></tmpl_loop>
+      </li></tmpl_unless></tmpl_unless></tmpl_loop>
     </ol></tmpl_unless></tmpl_if>
 </tmpl_unless>
 

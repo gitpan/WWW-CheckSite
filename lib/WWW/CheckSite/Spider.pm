@@ -2,9 +2,9 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 431 2005-11-12 00:59:37Z abeltje $
+# $Id: Spider.pm 446 2006-01-01 23:25:34Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.011';
+$VERSION = '0.013';
 
 =head1 NAME
 
@@ -69,6 +69,8 @@ The following constants ar exported on demand with the B<:const> tag.
 
 =item B<WCS_TOSPIDER>
 
+=item B<WCS_TOFOLLOW>
+
 =item B<WCS_NOCONTENT>
 
 =item B<WCS_OUTSCOPE>
@@ -81,13 +83,14 @@ sub WCS_UNKNOWN()   {   0 }
 sub WCS_FOLLOWED()  {   1 }
 sub WCS_SPIDERED()  {   2 }
 sub WCS_TOSPIDER()  {   4 }
+sub WCS_TOFOLLOW()  {   8 }
 sub WCS_NOCONTENT() {  64 }
 sub WCS_OUTSCOPE()  { 128 }
 
 use base 'Exporter';
 %EXPORT_TAGS = (
-    const => [qw( WCS_UNKNOWN  WCS_FOLLOWED  WCS_SPIDERED
-                  WCS_TOSPIDER WCS_NOCONTENT WCS_OUTSCOPE )],
+    const => [qw( WCS_UNKNOWN  WCS_FOLLOWED  WCS_SPIDERED WCS_TOSPIDER
+                  WCS_TOFOLLOW WCS_NOCONTENT WCS_OUTSCOPE )],
 );
 @EXPORT_OK = map @{ $EXPORT_TAGS{ $_ } } => keys %EXPORT_TAGS;
 
@@ -230,11 +233,17 @@ sub _update_stack {
 
     my $new_base = $mech->uri;
     foreach my $link ( @candidates ) {
-        my $check = URI->new_abs( $link->url, $new_base )->as_string;
+        my $new   = URI->new_abs( $link->url, $new_base )->as_string;
+        my $check = $self->strip_uri( $new );
         my $data;
         if ( $data = $cache->has( $check ) ) {
+            my $frag;
+            if ( $new ne $check && ! ($frag = $cache->has( $new )) ) {
+                $frag = [ WCS_TOFOLLOW, undef, $this_page->[2] + 1 ];
+                $cache->set( $new => $frag );
+            }
         } else {
-            if ( $self->uri_ok( $check ) ) {
+            if ( $self->uri_ok( $new ) ) {
                 $stack->push( $check );
                 $data = [ WCS_TOSPIDER, undef, $this_page->[2] + 1 ];
 	    } else {
@@ -327,6 +336,20 @@ sub filter_link {
         : $uri;
 }
 
+=head2 $spider->strip_uri( $uri )
+
+Strip the fragment bit of the I<$uri>.
+
+=cut
+
+sub strip_uri {
+    my $self = shift;
+
+    my $nu = URI->new( @_ );
+    defined $nu->fragment and $nu->fragment( undef );
+    return $nu->as_string
+}
+
 =head1 USERAGENT METHODS
 
 =head2 $spider->agent
@@ -367,11 +390,11 @@ L<WWW::Mechanize> for more information about these):
 
 =item I<links>
 
-=item I<HEAD> (for L<WWW::CheckSite::Validtor>)
+=item I<HEAD> (for L<WWW::CheckSite::Validator>)
 
-=item I<content> (for L<WWW::CheckSite::Validtor>)
+=item I<content> (for L<WWW::CheckSite::Validator>)
 
-=item I<images> (for L<WWW::CheckSite::Validtor>)
+=item I<images> (for L<WWW::CheckSite::Validator>)
 
 =back
 
@@ -453,12 +476,13 @@ Is not excluded by F<robots.txt> mechanism
 sub uri_ok {
     my( $self, $uri ) = @_;
 
+    my $check_uri = URI->new( $uri );
     $self->{_uri_ok} = '';
     $self->{v} and print "  Check '$uri'";
-    $self->{_uri_ok} = 'scope'   unless $uri =~ /^$self->{_self_base}/;
-    $self->{_uri_ok} = 'pattern' if     $uri =~ m/$self->{exclude}/;
+    $self->{_uri_ok} = 'scope'    unless $uri =~ m/^$self->{_self_base}/;
+    $self->{_uri_ok} = 'pattern'  if     $uri =~ m/$self->{exclude}/;
 
-    $self->{_uri_ok} = 'robots'  unless $self->{_norules} ||
+    $self->{_uri_ok} = 'robots'   unless $self->{_norules} ||
                                          $self->allowed( $uri );
 
     $self->{v} and
@@ -474,7 +498,7 @@ Checks the uri against the robotrules.
 
 sub allowed {
     my( $self, $uri ) = @_;
-    $self->current_rrules->allowed( $uri );
+    return $self->current_rrules->allowed( $uri );
 }
 
 =head2 $spider->init_robotrules( )
@@ -490,7 +514,6 @@ sub init_robotrules {
 
     my $agent = $self->agent;
     my $rules = WWW::RobotRules->new( $agent );
-    my $robot_agent = "User-agent: $agent\n";
 
     # The $base_url should be set!
     my $robots_uri = eval {
@@ -505,12 +528,18 @@ sub init_robotrules {
     my $rua = $self->new_agent;
     $rua->get( $robots_uri );
     $self->{v} and printf "done(%sok).\n", $rua->success ? '' : 'not ';
-    my $robots_txt = $rua->success ? $rua->content : $robot_agent;
-    $robots_txt ||= $robot_agent;
+    my $robots_txt = $rua->success ? $rua->content : "";
+    $robots_txt ||= @{ $self->{myrules} }
+        ? "User-Agent: *\n"
+        : "User-Agent: *\nDisallow:\n";
 
-    $robots_txt .= "Disallow: $_\n" foreach @{ $self->{myrules} };
+    foreach my $myrule ( @{ $self->{myrules} } ) {
+        $robots_txt .= "Disallow: $myrule\n";
+        $self->{v} and print "myrule: Disallow: $myrule\n";
+    }
 
     $robots_txt .= "Disallow:\n" if ( $robots_txt =~ tr/\n// ) == 1;
+    $self->{v} and print "Setting rules:\n$robots_txt\n";
 
     $rules->parse( $robots_uri, $robots_txt )
         if $self->{uri} =~ m|^https?://|; # problem with file:// uris

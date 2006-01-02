@@ -3,8 +3,8 @@ use strict;
 use warnings;
 $|=1;
 
-# $Id: checksite 432 2005-11-13 10:31:47Z abeltje $
-our $VERSION = '0.068';
+# $Id: checksite 454 2006-01-02 02:17:28Z abeltje $
+our $VERSION = '0.069';
 
 =head1 NAME
 
@@ -100,9 +100,12 @@ The number of stylesheets found and the number of stylesheets that are ok.
 
 =cut
 
-use File::Spec::Functions;
-use FindBin;
-use lib catdir $FindBin::Bin, 'lib'; # run out of the box
+use File::Spec::Functions qw( :DEFAULT rel2abs );
+use File::Basename;
+my $findbin;
+BEGIN { $findbin = rel2abs dirname $0 }
+use lib catdir $findbin, 'lib'; # run out of the box
+
 use WWW::CheckSite;
 use WWW::CheckSite::Validator;
 
@@ -110,7 +113,7 @@ use Getopt::Long;
 my %opt = (
     validate    => 1,
     by_uri      => 1,
-    by_upload   => 0,
+    by_upload   => undef,
     strictrules => 1,
     lang        => undef,
 
@@ -118,13 +121,14 @@ my %opt = (
     prefix      => undef,
     save        => 1,
     load        => 0,
+    tt          => 1,
 
     v           => 0,
 );
 GetOptions \%opt => qw(
     uri|u=s           prefix|p=s          dir|d=s
-    save!             load!
-    strictrules!
+    save!             load!               tt!
+    strictrules!      ua_class=s
     lang|l=s
     validate!
     by_uri|by_url:s   by_upload|by_upl:s  by_none
@@ -139,17 +143,18 @@ defined $opt{prefix} or usage();
 
 # Set validation method
 my $validate = $opt{validate}
-    ? $opt{by_upload} ? 'by_upload'
+    ? defined $opt{by_upload} ? 'by_upload'
     : $opt{by_none} ? 'by_none' : 'by_uri' : 'by_none';
-defined $opt{by_upload} && $opt{by_upload} !~ /^0|1$/ and
+$opt{by_upload} && $opt{by_upload} !~ /^0|1$/ and
     $WWW::CheckSite::Validator::VALIDATOR_FRM = $opt{by_upload};
-defined $opt{by_uri} && $opt{by_uri} !~ /^0|1$/ and
+$opt{by_uri} && $opt{by_uri} !~ /^0|1$/ and
     $WWW::CheckSite::Validator::VALIDATOR_URL = $opt{by_uri};
 
 if ( $opt{load} ) {
     my $validator = WWW::CheckSite->load(
         prefix => $opt{prefix},
         dir    => $opt{dir},
+        tt     => $opt{tt},
         v      => $opt{v},
     );
     $validator->write_report;
@@ -159,6 +164,8 @@ if ( $opt{load} ) {
         validate    => $validate,
         strictrules => $opt{strictrules},
         lang        => $opt{lang},
+        ua_class    => $opt{ua_class},
+        tt          => $opt{tt},
 
         prefix      => $opt{prefix},
         dir         => $opt{dir},

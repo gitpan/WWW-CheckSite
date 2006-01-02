@@ -4,8 +4,8 @@ use warnings;
 use FindBin;
 use File::Spec::Functions;
 
-# $Id: 20checksite.t 432 2005-11-13 10:31:47Z abeltje $
-use Test::More tests => 9;
+# $Id: 20checksite.t 449 2006-01-01 23:52:30Z abeltje $
+use Test::More tests => 10;
 
 my $verbose = $ENV{WCS_VERBOSE} || 0;
 
@@ -47,22 +47,30 @@ use_ok 'WWW::CheckSite';
     http://search.cpan.org/dist/Test-Smoke
     http://validator.w3.org/check?uri=referer
     http://www.nntp.perl.org/group/perl.daily-build.reports
+    http://www.nntp.perl.org/group/perl.daily-build.reports/
     http://www.test-smoke.org/
 
     http://www.test-smoke.org/FAQ.html 
 
     http://www.test-smoke.org/cgi/smoquel
     http://www.test-smoke.org/cgi/tsdb
-    http://www.test-smoke.org/cgi/tsdb?pversion=5.9.2
+    http://www.test-smoke.org/cgi/tsdb?mode=listlast;pversion=5.9.3
+    http://www.test-smoke.org/download/Bot-NNTPBot-0.005.tar.gz
     http://www.test-smoke.org/download/Test-Smoke-1.19.tar.gz
     http://www.test-smoke.org/download/V-0.10.tar.gz
+    http://www.test-smoke.org/download/WWW-CheckSite-0.013.tar.gz
+    http://www.test-smoke.org/repos/tools/nntpbot/
+    http://www.test-smoke.org/repos/tools/p5changes/p5changes
+    http://www.test-smoke.org/bots.html
     http://www.test-smoke.org/index.html
     http://www.test-smoke.org/otherperl.html
+    http://www.test-smoke.org/smoquel.html
     http://www.test-smoke.org/source.html
     http://www.test-smoke.org/status.shtml
     http://www.test-smoke.org/tinysmokedb.shtml
     http://ztreet.xs4all.nl/album/smokefarm/
     ), (
+    'http://www.test-smoke.org/smoquel.html#kwalttable',
     'http://www.test-smoke.org/FAQ.html#can_i_interrupt_a_smoke_run',
     'http://www.test-smoke.org/FAQ.html#can_i_still_generate_a_report_after_an_interrupted_smoke',
     'http://www.test-smoke.org/FAQ.html#how_can_i_run_continues_smokes',
@@ -82,8 +90,9 @@ use_ok 'WWW::CheckSite';
     );
     my @g_links = $wcs->dump_links;
 
-    TODO : {
-        local $TODO = "Get the return url from HEAD right";
-        is_deeply \@g_links, \@e_links, "All links returned";
-    }
+    is_deeply \@g_links, \@e_links, "All links returned";
+
+    my @f_links = $wcs->dump_links( 1 );
+    is_deeply \ @f_links, [ grep !m|/cgi/| && !m|/repos/| => @e_links ],
+              "All not skipped links returned";
 }

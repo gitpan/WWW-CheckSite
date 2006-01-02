@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 [% USE HTML %]
   <head>
-    <!-- $Id: wcssummrpt.tt 432 2005-11-13 10:31:47Z abeltje $ -->
+    <!-- $Id: wcssummrpt.tt 450 2006-01-02 01:55:45Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
     <title>WWW::CheckSite full report</title>
@@ -117,6 +117,7 @@ Pages with some problem: [% not_ok_cnt %]<br />
       [% SET notodd = 1 %]
       <ol>[% FOREACH li = pg.links %]
         [% NEXT IF li.status_ok %]
+        [% NEXT IF li.status_sk %]
         <li [% IF notodd %]class="even"[% SET notodd = 0 %]
             [% ELSE %][% SET notodd = 1 %][% END %]
            ><a href="[% li.uri %]" target="_blank"

@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <!-- $Id: wcsfullrpt.tmpl 282 2005-04-02 09:48:07Z abeltje $ -->
+    <!-- $Id: wcsfullrpt.tmpl 450 2006-01-02 01:55:45Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
     <title>WWW::CheckSite full report</title>
@@ -52,19 +52,22 @@ only</a><br />
      ><tmpl_var valid_tx></span>
     )<br /><tmpl_if link_cnt>
     This page had <tmpl_var link_cnt> links checked;
-    <tmpl_var links_ok> successfully followed: <span 
+    <tmpl_var links_ok> successfully followed<tmpl_if links_sk>,
+    <tmpl_var links_sk> skipped</tmpl_if>: <span 
       class="<tmpl_if link_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var link_status></span><br /></tmpl_if><tmpl_if image_cnt>
 
     This page had <tmpl_var image_cnt> images checked;
-    <tmpl_var images_ok> successfully loaded: <span
+    <tmpl_var images_ok> successfully loaded<tmpl_if images_sk>,
+    <tmpl_var images_sk> skipped</tmpl_if>: <span
       class="<tmpl_if image_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var image_status></span><br /></tmpl_if><tmpl_if style_cnt>
 
     This page had <tmpl_var style_cnt> styles checked;
-    <tmpl_var styles_ok> successfully loaded: <span
+    <tmpl_var styles_ok> successfully loaded;
+    <tmpl_var vstyles_ok> css-validated: <span
       class="<tmpl_if style_status_ok>green<tmpl_else>red</tmpl_if>"
-      ><tmpl_var style_status></span>; <tmpl_var vstyles_ok> css-validated
+      ><tmpl_var style_status></span>
      </tmpl_if>
 
   </li></tmpl_loop>

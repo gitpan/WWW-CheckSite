@@ -1,4 +1,4 @@
-README for WWW::CheckSite 0.014
+README for WWW::CheckSite 0.016
 ===============================
 This program will spider from the specified url and check the
 availability of the links, images and stylesheets on each page. Pages
@@ -14,8 +14,9 @@ PREREQUISITES
 =============
 This package needs:
 
+    * Storable
     * WWW::Mechanize (and LWP, URI, WWW::RobotRules)
-    * HTML::Template
+    * HTML::Template or Template (TT2)
 
 INSTALLATION
 ============
@@ -35,4 +36,3 @@ under the same terms as Perl itself.
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 [% USE HTML %]
   <head>
-    <!-- $Id: wcsfullrpt.tt 432 2005-11-13 10:31:47Z abeltje $ -->
+    <!-- $Id: wcsfullrpt.tt 450 2006-01-02 01:55:45Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
     <title>WWW::CheckSite full report</title>
@@ -63,20 +63,26 @@ only</a><br />
     )<br />
 
     [% IF pg.link_cnt %]This page had [% pg.link_cnt %] links checked;
-      [% pg.links_ok %] successfully followed:
+      [% pg.links_ok %] successfully followed[% IF pg.links_sk %],
+        [% pg.links_sk %] skipped
+      [% END %]:
       <span class="[% IF pg.link_status_ok %]green[% ELSE %]red[% END %]"
-           >[% pg.link_status %]</span><br />[%END %]
+           >[% pg.link_status %]</span><br />
+    [%END %]
 
     [% IF pg.image_cnt %]This page had [% pg.image_cnt %] images checked;
-      [% pg.images_ok %] successfully loaded:
-      <span class="[% IF pg.image_status_ok %]green[% END %]red[% END %]"
-           >[% IF pg.image_status %]</span><br />
+      [% pg.images_ok %] successfully loaded[% IF pg.images_sk %],
+        [% pg.images_sk %] skipped
+      [% END %]:
+      <span class="[% IF pg.image_status_ok %]green[% ELSE %]red[% END %]"
+           >[% pg.image_status %]</span><br />
     [% END %]
 
     [% IF pg.style_cnt %]This page had [% pg.style_cnt %] styles checked;
-      [% pg.styles_ok %] successfully loaded:
+      [% pg.styles_ok %] successfully loaded;
+      [% pg.vstyles_ok %] css-validated:
       <span class="[% IF pg.style_status_ok %]green[% ELSE %]red[% END %]"
-           >[% pg.style_status %]</span>; [% pg.vstyles_ok %] css-validated
+           >[% pg.style_status %]</span>
     [% END %]</li>
 [% END %]</ol>
 

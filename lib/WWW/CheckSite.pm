@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 432 2005-11-13 10:31:47Z abeltje $
-our $VERSION = '0.015';
+# $Id: CheckSite.pm 456 2006-01-02 02:28:34Z abeltje $
+our $VERSION = '0.016';
 
 =head1 NAME
 
@@ -143,7 +143,7 @@ sub load {
     -f $wcsfile && -r _ or _die( "", "Cannot find '$wcsfile': $!" );
 
     my $self = retrieve $wcsfile;
-    $self->{ $_ } = $args{ $_ } for qw( dir prefix );
+    $self->{ $_ } = $args{ $_ } for qw( dir prefix tt v );
 
     return $self;
 }
@@ -195,20 +195,21 @@ sub validate {
     }
 }
 
-=head2 $wcs->dump_links
+=head2 $wcs->dump_links( $noskipped )
 
 Return a list with all URLs encountered during site-traversal.
 
 =cut
 
 sub dump_links {
-    my $self = shift;
+    my( $self, $noskipped ) = @_;
 
     my %seen;
     for my $url ( keys %{ $self->{report} } ) {
         $seen{ $url }++;
         for my $link ( @{ $self->{report}{ $url }{links} } ) {
-            $seen{ $link->{uri} }++;
+            $seen{ $link->{uri} }++
+                unless $noskipped && $link->{status} == 999;
         }
     }
 
@@ -285,9 +286,11 @@ Generate the reports.
 sub write_report {
     my $self = shift;
 
-    # first check if we have Template Toolkit
-    eval qq{use Template};
-    return $self->write_tt_report unless $@;
+    if ( $self->{tt} ) {
+        # first check if we have Template Toolkit
+        eval qq{use Template};
+        return $self->write_tt_report unless $@;
+    }
 
     # then check for HTML::Template
     eval qq{use HTML::Template};
@@ -380,6 +383,8 @@ sub write_tt_report {
             name_outfile( $self->_datadir, $type ),
         ) || $self->_die( $report->error );
 
+        $self->{v} and printf "Finished writing '%s'\n",
+                              name_outfile( $self->_datadir, $type );
     }
     return 1;
 }
@@ -457,8 +462,8 @@ sub create_report_data {
                 $_->{status_ok} = $_->{status} == 200;
                 $_->{status_sk} = $_->{status} == 999;
                 exists $_->{valid} and
-                    $_->{status_ok} &&= (defined $_->{valid}
-                                             ? $_->{valid} == 1 ? 1 : 1 : 0);
+                    $_->{status_ok} &&= $_->{valid};
+
                 $pinfo->{all_ok} &&= ( $_->{status_ok} || $_->{status_sk} );
 
                 $_->{text} =~ s/>No text in TAG</>No text in $_->{tag}</
@@ -469,10 +474,10 @@ sub create_report_data {
                 if ( $_->{tag} eq 'link' ) { # this is a style
                     $_->{status_sk} and $pinfo->{styles_sk}++;
                     $pinfo->{all_styles_ok} &&= $_->{link_ok};
-                    $_->{valid_tx} = defined $_->{valid}
+                    $_->{valid_tx} = $_->{valid}
                         ? $_->{valid} == 1 ? 'ok' : 'skipped' : 'not ok';
-                    $_->{valid_ok} = defined $_->{valid}
-                        ? $_->{valid} == 1 ? 1 : 0 : 0;
+                    $_->{valid_ok} = $_->{valid}
+                        ? $_->{valid} == 1 ? 1 : 1 : 0;
                 } elsif ( exists $_->{ct} ) { # this is an image
                     $_->{status_sk} and $pinfo->{images_sk}++;
                     $pinfo->{all_images_ok} &&= $_->{link_ok};
@@ -482,7 +487,7 @@ sub create_report_data {
                 }
             }
 
-            $pinfo->{valid_tx} = defined $pinfo->{valid}
+            $pinfo->{valid_tx} = $pinfo->{valid}
                 ? $pinfo->{valid} == 1 ? 'ok' : 'skipped' : 'not ok';
             defined $pinfo->{valid} and $pinfo->{all_ok} &&= $pinfo->{valid};
 

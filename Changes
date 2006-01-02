@@ -10,6 +10,152 @@ The filelists have a short symbolic indicator:
 
 Enjoy!
 ___________________________________________________________________________
+[   456] By: abeltje                          on 2006-01-02 03:28:34 +0100
+        Log: * Prepare for distribution
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   454] By: abeltje                          on 2006-01-02 03:17:28 +0100
+        Log: * [CHANGE]
+	       * FIX --by_upload rt #15766
+	       + add --ua_class= to override the standard WWW::Mechanize
+		 (for basic authentication e.g.)
+	       + add --nott to force the use of HTML::Template
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[   453] By: abeltje                          on 2006-01-02 03:11:27 +0100
+        Log: * [CHANGE]
+	       + add some diagnostics to set the PREREQ_PM target "better"
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Makefile.PL
+___________________________________________________________________________
+[   452] By: abeltje                          on 2006-01-02 03:08:54 +0100
+        Log: * [CHANGE]
+	       * update the PREREQ list
+	       * update the version to 0.016
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/README
+___________________________________________________________________________
+[   451] By: abeltje                          on 2006-01-02 03:07:26 +0100
+        Log: * [CHANGE]
+	       + pass more arguments (tt, v) in the load() constructor
+	       + {tt} can be used to force the use HTML::Template (when tt
+		 is false)
+	       + add some verbosity
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   450] By: abeltje                          on 2006-01-02 02:55:45 +0100
+        Log: * [CHANGE]
+	       + fix some stuff
+	       * beautify some things
+	       - do not report skipped links/images in the summary
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/wcsfullrpt.tmpl,
+	     /checksite/lib/WWW/wcsfullrpt.tt,
+	     /checksite/lib/WWW/wcssummrpt.tmpl,
+	     /checksite/lib/WWW/wcssummrpt.tt
+___________________________________________________________________________
+[   449] By: abeltje                          on 2006-01-02 00:52:30 +0100
+        Log: * [CHANGE]
+	       + use a new dump of a checksite run on test-smoke.org
+		 (Storable 2.06)
+	       * update the urls tested for
+	       + add a test for the new noskipped argument of
+		 WWW::CheckSite->dum_links()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/t/20checksite.t, /checksite/t/tsorg/tsorg.wcs
+___________________________________________________________________________
+[   448] By: abeltje                          on 2006-01-02 00:48:26 +0100
+        Log: * [FIX]
+	       * FIX some more Valid/Skipped/Not valid stuff
+	       + add a noskipped argument to dump_links()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   447] By: abeltje                          on 2006-01-02 00:39:05 +0100
+        Log: * [FIX] strictrules rt #15649 (by Slaven Rezic)
+	       * change strict_rules to strictrules (that is what
+		 WWW::CheckSite uses!)
+	       * FIX style_by_upload() valid is when no Errors are
+		 reported! (jigsaw doesn't report validness for uploaded
+		 style sheets)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   446] By: abeltje                          on 2006-01-02 00:25:34 +0100
+        Log: * [CHANGE] optimize spidering: rt #16162 (by Slaven Rezic)
+	       * do not spider uris with fragment that have been checked
+		 without it
+		 - revert the bit from 438 that excluded all fragmented
+		   uri's
+		 + put the fragmented uri in the cache even if the
+		   stripped one is there
+	       * FIX typos in pod (rt #15649)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   445] By: abeltje                          on 2005-12-31 11:48:57 +0100
+        Log: * [FIX] https://rt.cpan.org/Ticket/Display.html?id=15771
+	       + now excape the content-types in the regexen
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   441] By: abeltje                          on 2005-12-04 17:16:38 +0100
+        Log: * [FIX]
+	       * fix some filenames :-(
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/MANIFEST
+___________________________________________________________________________
+[   440] By: abeltje                          on 2005-12-04 17:11:04 +0100
+        Log: * [CHANGE]
+	       + add a local HTTP server (HTTP::Server::Simple)
+	       + update the testsuite to use the local HTTP server
+	       + add some file and update counts
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t/docroot/areabroken.html,
+	     /checksite/t/docroot/dot.gif,
+	     /checksite/t/docroot/norobots.html, /checksite/t/lib,
+	     /checksite/t/lib/HTTP, /checksite/t/lib/HTTP/Server,
+	     /checksite/t/lib/HTTP/Server/Simple,
+	     /checksite/t/lib/HTTP/Server/Simple/CGI.pm,
+	     /checksite/t/lib/HTTP/Server/Simple.pm,
+	     /checksite/t/lib/HTTPD.pm, /checksite/t/lib/mime.types
+           ! /checksite/MANIFEST, /checksite/t/01spider.t,
+	     /checksite/t/02spider.t, /checksite/t/10validator.t,
+	     /checksite/t/11validator.t, /checksite/t/docroot/index.html
+___________________________________________________________________________
+[   439] By: abeltje                          on 2005-12-04 17:04:39 +0100
+        Log: * [FIX]
+	       + images_ok wasn't counted proper
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   438] By: abeltje                          on 2005-12-04 16:57:26 +0100
+        Log: * [FIX]
+	       https://rt.cpan.org/Ticket/Display.html?Action=Take&id=1616
+	       2
+	       + add fragmented uris to the list non-spidarable links
+	       * fix some RobotRules stuff
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   437] By: abeltje                          on 2005-12-04 12:12:56 +0100
+        Log: * [CHANGE] Slaven Rezic:
+	       https://rt.cpan.org/NoAuth/Bug.html?id=15771
+	       * add these content-types to also validate:
+		   * application/xhtml+xml
+		   * application/vnd.wap.xhtml+xml
+		   * text/xhtml
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   433] By: abeltje                          on 2005-11-13 11:58:53 +0100
+        Log: * Regenerate Changes for WWW::CheckSite 0.015
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
 [   432] By: abeltje                          on 2005-11-13 11:31:47 +0100
         Log: * [CHANGE] some by Slaven Rezic [SR]
 	       + add support for TT

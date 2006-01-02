@@ -2,9 +2,9 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 430 2005-11-10 09:26:44Z abeltje $
+# $Id: Validator.pm 447 2006-01-01 23:39:05Z abeltje $
 use vars qw( $VERSION $VALIDATOR_URL $VALIDATOR_FRM $VALIDATOR_STYLE );
-$VERSION = '0.008';
+$VERSION = '0.012';
 
 =head1 NAME
 
@@ -119,7 +119,7 @@ page.  If there is no return status, it will C<HEAD> the uri and
 update the cache status for this link to prevent multiple HEADing.
 
 B<NOTE>: This method does B<not> respect the exclusion rules, and only
-robot-rules with C<strict_rules> enabled!
+robot-rules with C<strictrules> enabled!
 
 The structure for links:
 
@@ -154,7 +154,7 @@ sub check_links {
         my $check = URI->new_abs( $link->url, $mech->uri );
         my $in_cache = $cache->has( $check );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            if ( $self->{strict_rules} && !$self->allowed( $check ) ) {
+            if ( $self->{strictrules} && !$self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
                 $self->{v} and print "  HEAD '$check': skipped.\n";
             } else {
@@ -165,7 +165,7 @@ sub check_links {
                 $self->{v} and
                     printf "done(%sok).\n", $ua->success ? '' : 'not ';
     
-                $ua->success && $ua->ct ne 'text/html' and
+                $ua->success && ! $self->ct_can_validate( $ua ) and
                     $in_cache->[0] = WCS_NOCONTENT;
             }
 	}
@@ -226,7 +226,7 @@ sub check_images {
         defined $in_cache or
             $in_cache = $cache->set( $check => [ WCS_FOLLOWED ] );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            if ( $self->{strict_rules} && !$self->allowed( $check ) ) {
+            if ( $self->{strictrules} && !$self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
             } else {
                 $self->{v} and print "  HEAD '$check': ";
@@ -250,7 +250,7 @@ sub check_images {
     }
     $stats->{image_cnt} = @images;
     $stats->{images} = \@checked;
-    $stats->{images_ok} = grep $_->{status} => @checked;
+    $stats->{images_ok} = grep $_->{status} == 200 => @checked;
 
     return $stats;
 }
@@ -301,7 +301,7 @@ sub check_styles {
         defined $in_cache or
             $in_cache = $cache->set( $check => [ WCS_FOLLOWED ] );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            if ( $self->{strict_rules} && !$self->allowed( $check ) ) {
+            if ( $self->{strictrules} && !$self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
             } else {
                 my $ua = $self->new_agent;
@@ -517,12 +517,27 @@ sub style_by_upload {
     );
 
     my $valid = $ua->success 
-        ? $ua->content =~ /No error or warning found/ : -1;
+        ? $ua->content !~ m|<h2>Errors</h2>|i : -1;
     $self->{v} and printf " done(%sok)\n", $valid == 1 ? "" : "not ";
 
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );
 
     return $valid;
+}
+
+=head2 $wcs->ct_can_validate( $ua )
+
+Check if the content-type is "validatable".
+
+=cut
+
+sub ct_can_validate {
+    my( $self, $ua ) = @_;
+
+    return $ua->ct =~ m[^\Qtext/html\E]                     ||
+           $ua->ct =~ m[^\Qtext/xhtml\E]                    ||
+           $ua->ct =~ m[^\Qapplication/xhtml+xml\E]         ||
+           $ua->ct =~ m[^\Qapplication/vnd.wap.xhtml+xml\E];
 }
 
 =head2 $wcs->set_action

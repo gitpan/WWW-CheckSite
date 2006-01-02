@@ -1,4 +1,4 @@
-MANIFEST                    $Id: MANIFEST 432 2005-11-13 10:31:47Z abeltje $
+MANIFEST                    $Id: MANIFEST 441 2005-12-04 16:16:38Z abeltje $
 README
 Changes
 Makefile.PL
@@ -17,8 +17,15 @@ t/02spider.t
 t/10validator.t
 t/11validator.t
 t/20checksite.t
+t/docroot/areabroken.html
+t/docroot/dot.gif
 t/docroot/imagebroken.html
 t/docroot/index.html
 t/docroot/linkbroken.html
+t/docroot/norobots.html
+t/lib/HTTPD.pm
+t/lib/mime.types
+t/lib/HTTP/Server/Simple.pm
+t/lib/HTTP/Server/Simple/CGI.pm
 t/tsorg/tsorg.wcs
 META.yml                                 Module meta-data (added by MakeMaker)

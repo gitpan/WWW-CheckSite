@@ -1,28 +1,52 @@
 #! perl
 use strict;
 use warnings;
-use FindBin;
 
-# $Id: 11validator.t 274 2005-03-20 11:35:32Z abeltje $
-use Test::More 'no_plan';
+# $Id: 11validator.t 440 2005-12-04 16:11:04Z abeltje $
+use Test::More;
+
+use File::Spec::Functions qw( :DEFAULT rel2abs abs2rel );
+use File::Basename;
+my $findbin;
+BEGIN {
+    eval { use WWW::Mechanize };
+    plan $@
+        ? ( skip_all => "No WWW::Mechanize available ($@)" )
+        : ( tests => 21 );
+    $findbin = rel2abs dirname $0;
+}
+
+use lib catdir $findbin, 'lib';
+use_ok 'HTTPD';
+my( $port, $pid, $s ) = ( 54321 );
+{ # Set up local server
+
+    ok $s = HTTPD->new( $port ), "Created HTTPD";
+    isa_ok $s, 'HTTPD';
+
+    $pid = $s->background;
+    my $droot = abs2rel $s->{docroot};
+    ok $pid, "Local webever running as $pid on port $port ($droot)";
+}
+END { $pid and kill 9, $pid }
 
 my %test = (
-    "file://$FindBin::Bin/docroot/index.html" => {
+    "http://localhost:$port/index.html" => {
         head => 0, check => 1, fetch => 1, validate => 0,
     },
-    "file://$FindBin::Bin/docroot/linkbroken.html" => {
+    "http://localhost:$port/linkbroken.html" => {
         head => 1, check => 1, fetch => 1, validate => 0,
     },
-    "file://$FindBin::Bin/docroot/imagebroken.html" => {
+    "http://localhost:$port/imagebroken.html" => {
         head => 1, check => 1, fetch => 1, validate => 0,
     },
-    "file://$FindBin::Bin/docroot/areabroken.html" => {
+    "http://localhost:$port/areabroken.html" => {
         head => 1, check => 1, fetch => 1, validate => 0,
     },
-    "file://$FindBin::Bin/docroot/doesnotexist.html" => {
+    "http://localhost:$port/doesnotexist.html" => {
         head => 1, check => 1, fetch => 1, validate => 0,
     },
-    "file://$FindBin::Bin/docroot/dot.gif" => {
+    "http://localhost:$port/dot.gif" => {
         head => 1, check => 1, fetch => 0, validate => 0,
     },
 );
@@ -34,7 +58,7 @@ use_ok 'WWW::CheckSite::Validator';
     my $out = tie *STDOUT, 'CatchOut';
     ok my $wcs = WWW::CheckSite::Validator->new(
         validate => 'by_none',
-        uri      => "file://$FindBin::Bin/docroot/index.html",
+        uri      => "http://localhost:$port/index.html",
         v        => 1,
     ), "called new()";
     isa_ok $wcs, 'WWW::CheckSite::Validator';
