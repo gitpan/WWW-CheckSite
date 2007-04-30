@@ -1,7 +1,7 @@
 #! perl -w
 use strict;
 
-# $Id: 10validator.t 440 2005-12-04 16:11:04Z abeltje $
+# $Id: 10validator.t 559 2006-10-08 09:54:46Z abeltje $
 use Test::More;
 
 my( $port, $pid, $s ) = ( 54321 );
@@ -66,7 +66,7 @@ use_ok 'WWW::CheckSite::Validator';
 {
     my $sp = WWW::CheckSite::Validator->new(
         v => $verbose,
-        uri => "http://localhost:$port/index.html",
+        uri => ["http://localhost:$port/index.html"],
         validate => 'by_none',
     );
     isa_ok $sp, "WWW::CheckSite::Validator";

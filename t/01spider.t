@@ -1,7 +1,7 @@
 #! perl -w
 use strict;
 
-# $Id: 01spider.t 440 2005-12-04 16:11:04Z abeltje $
+# $Id: 01spider.t 559 2006-10-08 09:54:46Z abeltje $
 use Test::More tests => 10;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs );
@@ -28,7 +28,7 @@ ok exists &WCS_OUTSCOPE,  "WCS_OUTSCOPE";
 
 {
     my $sp = WWW::CheckSite::Spider->new(
-        { v => $verbose, uri => "file://$findbin/docroot/index.html" }
+        { v => $verbose, uri => ["file://$findbin/docroot/index.html"] }
     );
     isa_ok $sp, 'WWW::CheckSite::Spider';
 }

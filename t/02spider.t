@@ -1,7 +1,7 @@
 #! perl -w
 use strict;
 
-# $Id: 02spider.t 440 2005-12-04 16:11:04Z abeltje $
+# $Id: 02spider.t 623 2007-04-29 09:01:04Z abeltje $
 use Test::More;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs abs2rel );
@@ -11,13 +11,22 @@ BEGIN {
     eval { use WWW::Mechanize };
     plan $@
         ? ( skip_all => "No WWW::Mechanize available ($@)" )
-        : ( tests => 17 );
+        : ( tests => 19 );
     $findbin = rel2abs dirname $0;
 }
 
 use lib catdir $findbin, 'lib';
 use_ok 'HTTPD';
-my( $port, $pid, $s ) = ( 54321 );
+
+my $port;
+{
+    use_ok 'IO::Socket::INET';
+    my $s = IO::Socket::INET->new( Listen => 5, Proto => 'tcp' );
+    $port = $s->sockport;
+    ok $port, "Using port $port for server";
+}
+
+my( $pid, $s );
 { # Set up local server
 
     ok $s = HTTPD->new( $port ), "Created HTTPD";
@@ -36,9 +45,9 @@ use_ok 'WWW::CheckSite::Spider';
 
 {
     my $sp = WWW::CheckSite::Spider->new( v=> $verbose,
-        uri      => "http://localhost:$port/index.html",
+        uri      => ["http://localhost:$port/index.html"],
         ua_class => 'WWW::Mechanize',
-        myrules  => [ "norobots.html" ],
+        myrules  => [ "/norobots.html" ],
     );
 
     isa_ok $sp, 'WWW::CheckSite::Spider';
@@ -63,7 +72,7 @@ use_ok 'WWW::CheckSite::Spider';
 
 {
     my $sp = WWW::CheckSite::Spider->new( v=> $verbose,
-        uri      => "http://localhost:$port/index.html",
+        uri      => ["http://localhost:$port/index.html"],
         ua_class => 'WWW::Mechanize',
         exclude  => qr/norobots.html$/,
     );

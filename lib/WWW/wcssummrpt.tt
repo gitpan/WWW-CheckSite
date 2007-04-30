@@ -3,10 +3,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 [% USE HTML %]
   <head>
-    <!-- $Id: wcssummrpt.tt 450 2006-01-02 01:55:45Z abeltje $ -->
+    <!-- $Id: wcssummrpt.tt 628 2007-04-30 13:17:47Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
-    <title>WWW::CheckSite full report</title>
+    <title>WWW::CheckSite error summary report</title>
     <style type="text/css">
 <!--
 body      { background-color: #CCF; font-family: sans serif; }
@@ -18,7 +18,7 @@ dd ol li  { font-size: smaller;             }
     </style>
   </head>
   <body>
-    <h1>CheckSite report for [% HTML.escape( url ) -%]</h1>
+    <h1>Kwalitee report for [% HTML.escape( url ) -%]</h1>
     <h2>[% HTML.escape( title ) -%]</h2>
 <a name="summary"></a>
 Generated: [% now_time %]<br />
@@ -36,6 +36,7 @@ report</a><br />
     <hr />
     <h2>Summary</h2>
     <hr />
+  <p>
     Checked [% page_cnt %] pages.<br />
     [% IF did_validate %]
       [% valid_ok %] pages out of
@@ -44,8 +45,9 @@ report</a><br />
       W3 validation was skipped.
     [% END %]
     <br />
-
-Pages with some problem: [% not_ok_cnt %]<br />
+    Kwalitee for the complete site: [% kwalitee %]<br />
+    Pages with some problem: [% not_ok_cnt %]<br />
+  </p>
 [% IF not_ok_cnt %]
     [% SET iseven = 1 %]
     <ol>[% FOREACH pg = pages %]
@@ -57,24 +59,29 @@ Pages with some problem: [% not_ok_cnt %]<br />
     (returned <span class="[% IF pg.status_ok %]green[% ELSE %]red[% END %]"
      >[% pg.status_tx %]</span>; W3 validation
      <span class="[% IF pg.valid %]green[% ELSE %]red[% END %]"
-     >[% pg.valid_tx %]</span>
+     >[% pg.valid_tx %]</span>;
+     kwalitee: [% pg.kwalitee %]
     )<br />
 
     [% IF pg.link_cnt %]This page had [% pg.link_cnt %] links checked;
-      [% pg.links_ok %] successfully followed:
+      [% pg.links_ok %] successfully followed;
+      kwalitee [% pg.kw_links %]:
       <span class="[% IF pg.link_status_ok %]green[% ELSE %]red[% END %]"
            >[% pg.link_status %]</span><br />[%END %]
 
     [% IF pg.image_cnt %]This page had [% pg.image_cnt %] images checked;
-      [% pg.images_ok %] successfully loaded:
-      <span class="[% IF pg.image_status_ok %]green[% END %]red[% END %]"
-           >[% IF pg.image_status %]</span><br />
+      [% pg.images_ok %] successfully loaded;
+      kwalitee [% pg.kw_images %]:
+      <span class="[% IF pg.image_status_ok %]green[% ELSE %]red[% END %]"
+           >[% pg.image_status %]</span><br />
     [% END %]
 
     [% IF pg.style_cnt %]This page had [% pg.style_cnt %] styles checked;
-      [% pg.styles_ok %] successfully loaded:
+      [% pg.styles_ok %] successfully loaded;
+      [% pg.vstyles_ok %] css-validated;
+      kwalitee [% pg.kw_styles %]:
       <span class="[% IF pg.style_status_ok %]green[% ELSE %]red[% END %]"
-           >[% pg.style_status %]</span>; [% pg.vstyles_ok %] css-validated
+           >[% pg.style_status %]</span>
     [% END %]</li>
   [% END %]
   [% END %]</ol>
@@ -91,26 +98,36 @@ Pages with some problem: [% not_ok_cnt %]<br />
        title="Open this page in a new window">
     [% HTML.escape( pg.uri ) %]</a> returned status 
    <span class="[% IF pg.status_ok %]green[% ELSE %]red[% END %]"
-     >[% pg.status_tx %]</span>
+     >[% pg.status_tx %]</span> ([% pg.kw_return %])
   </dt>
   <dd>
     <p>
-    Title: <b>[% HTML.escape( pg.title ) %]</b><br />
+    Title: <b>[% HTML.escape( pg.title ) %]</b>
+    ([% pg.kw_title %])<br />
     Content-type: [% pg.ct %]<br />
-    <a href="http://validator.w3.org/check?uri=[% pg.uri %]"
+    <a href="[% pg.validator_uri %]"
        title="Run W3 validation on this page" target="_blank">
     W3 validation</a>:
     <span class="[% IF pg.valid %]green[% ELSE %]red[% END %]"
-     >[% pg.valid_tx %]</span><br />
-    Depth: [% pg.depth %]
+     >[% pg.valid_tx %]</span>
+    ([% pg.kw_valid %])<br />
+    Depth: [% pg.depth %]<br />
+    Kwalitee: [% pg.kwalitee %]<br />
+    [% IF pg.link_status_ok %]Links checked: [% pg.link_cnt %]
+                                             ([% pg.kw_links %])<br />[% END %]
+    [% IF pg.image_status_ok %]Images checked: [% pg.image_cnt %]
+                                             ([% pg.kw_images %])<br />[% END %]
+    [% IF pg.style_status_ok %]Styles checked: [% pg.style_cnt %]
+                                             ([% pg.kw_styles %])<br />[% END %]
     </p>
 
-  [% IF ! pg.all_links_ok %]
-    [% IF pg.links %]
+  [% IF ! pg.link_status_ok %]
+    [% IF pg.link_cnt > 0 %]
       <p class="detaildt">
         <b>Links checked on this page:
         [% pg.link_cnt %]</b> ([% pg.links_ok %] ok
-         [%- IF pg.links_sk %]; [% pg.links_sk %] skipped[% END %]):
+         [%- IF pg.links_sk %]; [% pg.links_sk %] skipped[% END %];
+         kwalitee [% pg.kw_links %]):
         <span class="[% IF pg.link_status_ok %]green[% ELSE %]red[% END %]"
            >[% pg.link_status %]</span>
       </p>
@@ -152,10 +169,11 @@ Pages with some problem: [% not_ok_cnt %]<br />
   [% END %]
 
 
-  [% IF ! pg.all_images_ok %]
-    [% IF pg.images %]<p class="detaildt">
+  [% IF ! pg.image_status_ok %]
+    [% IF pg.image_cnt > 0 %]<p class="detaildt">
       <b>Images checked on this page: [% pg.image_cnt %]</b>
-      ([% pg.images_ok %] ok): <span
+      ([% pg.images_ok %] ok;
+       kwalitee [% pg.kw_images %]): <span
       class="[% IF pg.image_status_ok %]green[% ELSE %]red[% END %]"
       >[% pg.image_status %]</span>
     </p>
@@ -170,11 +188,9 @@ Pages with some problem: [% not_ok_cnt %]<br />
              >[% img.status_tx %]</span><br />
         <b>&lt;img src=&quot;[% HTML.escape( img.link ) %]&quot;
              alt=&quot;<span
-               [% IF img.no_text %]class="red"
-                    >NO TEXT IN ALT
+               [%- IF img.no_text %]class="red"
                [% ELSE %]class="green"
-                    >[% HTML.escape( img.text ) %]
-               [% END %]</span>&quot; /&gt;</b>
+               [% END %] >[% HTML.escape( img.text ) %]</span>&quot; /&gt;</b>
         ([% img.ct %])
       </li>
     [% END %]</ol>
@@ -185,8 +201,8 @@ Pages with some problem: [% not_ok_cnt %]<br />
     [% END %]
   [% END %]
 
-  [% IF ! pg.all_styles_ok %]
-    [% IF pg.styles %]<p class="detaildt">
+  [% IF ! pg.style_status_ok %]
+    [% IF pg.style_cnt > 0 %]<p class="detaildt">
       <b>Styles checked on this page: [% pg.style_cnt %]</b>
       ([% pg.styles_ok %] ok): <span
            class="[% IF pg.tyle_status_ok %]green[% ELSE %]red[% END %]"

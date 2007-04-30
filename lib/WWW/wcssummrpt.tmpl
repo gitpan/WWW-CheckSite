@@ -2,10 +2,10 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <!-- $Id: wcssummrpt.tmpl 450 2006-01-02 01:55:45Z abeltje $ -->
+    <!-- $Id: wcssummrpt.tmpl 625 2007-04-29 12:30:41Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
-    <title>WWW::CheckSite errors report</title>
+    <title>WWW::CheckSite error summary report</title>
     <style type="text/css">
 <!--
 body     { background-color: #CCF; font-family: sans serif; }
@@ -16,7 +16,7 @@ dd ol li { font-size: smaller;             }
     </style>
   </head>
   <body>
-    <h1>CheckSite report for <tmpl_var name=url escape=HTML></h1>
+    <h1>Kwalitee report for <tmpl_var name=url escape=HTML></h1>
     <h2><tmpl_var title></h2>
 <a name="summary"></a>
 Generated: <tmpl_var now_time><br />
@@ -32,6 +32,7 @@ report</a><br />
     <hr />
     <h2>Summary</h2>
     <hr />
+  <p>
     Checked <tmpl_var page_cnt> pages.<br />
     <tmpl_if did_validate>
       <tmpl_var valid_ok> pages out of
@@ -39,8 +40,9 @@ report</a><br />
     <tmpl_else>
       W3 validation was skipped.
     </tmpl_if><br />
-
-Pages with some problem: <tmpl_var not_ok_cnt><br />
+    Kwalitee for the complete site: <tmpl_var kwalitee><br />
+    Pages with some problem: <tmpl_var not_ok_cnt><br />
+  </p>
 <ol><tmpl_loop pages>
   <tmpl_unless all_ok><li>
     <tmpl_unless all_ok><a href="#<tmpl_var intref>"
@@ -50,22 +52,27 @@ Pages with some problem: <tmpl_var not_ok_cnt><br />
     (returned <span class="<tmpl_if status_ok>green<tmpl_else>red</tmpl_if>"
      ><tmpl_var status_tx></span>; W3 validation
      <span class="<tmpl_if valid>green<tmpl_else>red</tmpl_if>"
-     ><tmpl_var valid_tx></span>
+     ><tmpl_var valid_tx></span>;
+    kwalitee <tmpl_var kwalitee>
     )<br /><tmpl_if link_cnt>
     This page had <tmpl_var link_cnt> links checked;
-    <tmpl_var links_ok> successfully followed: <span 
+    <tmpl_var links_ok> successfully followed;
+    kwalitee <tmpl_var kw_links>: <span 
       class="<tmpl_if link_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var link_status></span><br /></tmpl_if><tmpl_if image_cnt>
 
     This page had <tmpl_var image_cnt> images checked;
-    <tmpl_var images_ok> successfully loaded: <span
+    <tmpl_var images_ok> successfully loaded;
+    kwalitee <tmpl_var kw_images>: <span
       class="<tmpl_if image_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var image_status></span><br /></tmpl_if><tmpl_if style_cnt>
 
     This page had <tmpl_var style_cnt> styles checked;
-    <tmpl_var styles_ok> successfully loaded: <span
+    <tmpl_var styles_ok> successfully loaded;
+    <tmpl_var vstyles_ok> css-validated;
+    kwalitee <tmpl_var kw_styles>: <span
       class="<tmpl_if style_status_ok>green<tmpl_else>red</tmpl_if>"
-      ><tmpl_var style_status></span>; <tmpl_var vstyles_ok> css-validated
+      ><tmpl_var style_status></span>
     </tmpl_if>
 
   </li></tmpl_unless></tmpl_loop>
@@ -83,32 +90,42 @@ Pages with some problem: <tmpl_var not_ok_cnt><br />
        title="Open this page in a new window">
     <tmpl_var name=uri escape=HTML></a> returned status 
    <span class="<tmpl_if status_ok>green<tmpl_else>red</tmpl_if>"
-     ><tmpl_var status_tx></span>
+     ><tmpl_var status_tx></span> (<tmpl_var kw_return>)
   </dt>
   <dd>
     <p>
-    Title: <b><tmpl_var name=title escape=HTML></b><br />
+    Title: <b><tmpl_var name=title escape=HTML></b>
+           (<tmpl_var kw_title>)<br />
     Content-type: <tmpl_var ct><br />
-    <a href="http://validator.w3.org/check?uri=<tmpl_var name=uri>"
+    <a href="<tmpl_var name=validator_uri escape=HTML>"
        title="Run W3 validation on this page" target="_blank">
     W3 validation</a>: 
     <span class="<tmpl_if valid>green<tmpl_else>red</tmpl_if>"
-     ><tmpl_var valid_tx></span><br />
-    Depth: <tmpl_var depth>
+     ><tmpl_var valid_tx></span>
+    (<tmpl_var kw_valid>)<br />
+    Depth: <tmpl_var depth><br />
+    Kwalitee: <tmpl_var kwalitee><br />
+    <tmpl_if link_status_ok>Links checked: <tmpl_var link_cnt>
+                                          (<tmpl_var kw_links>)<br />
+    </tmpl_if><tmpl_if image_status_ok>Images checked: <tmpl_var image_cnt>
+                                          (<tmpl_var kw_images>)<br />
+    </tmpl_if><tmpl_if style_status_ok>Styles checked: <tmpl_var style_cnt>
+                                          (<tmpl_var kw_styles>)</tmpl_if>
     </p>
 
-<tmpl_unless all_links_ok>
+<tmpl_unless link_status_ok>
     <tmpl_if links><p>
     <b>Links checked on this page: <tmpl_var link_cnt></b>
     (<tmpl_var links_ok> ok<tmpl_if links_sk>;
-    <tmpl_var links_sk> skipped</tmpl_if>): <span
+    <tmpl_var links_sk> skipped</tmpl_if>;
+    kwalitee <tmpl_var kw_links>): <span
     <tmpl_if link_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
      ><tmpl_var link_status></span>
     <tmpl_unless links><b>none</b></tmpl_unless>
     </p>
 
     <tmpl_unless all_links_ok><ol><tmpl_loop links>
-      <tmpl_unless link_ok><tmpl_unless link_sk><li>
+      <tmpl_unless status_ok><tmpl_unless status_sk><li>
        <b><tmpl_if intref><a href="#<tmpl_var intref>"
               title="Jump to detail for this page"></tmpl_if>
 <tmpl_if type_area>&lt;area href=&quot;<tmpl_var name=link>&quot;
@@ -133,13 +150,15 @@ Pages with some problem: <tmpl_var not_ok_cnt><br />
     </ol></tmpl_unless></tmpl_if>
 </tmpl_unless>
 
-    <tmpl_unless all_images_ok><tmpl_if images><p>
+    <tmpl_unless image_status_ok><tmpl_if images><p>
     <b>Images checked on this page: <tmpl_var image_cnt></b>
-    (<tmpl_var images_ok> ok): <span
+    (<tmpl_var images_ok> ok;
+    kwalitee <tmpl_var kw_images>): <span
     <tmpl_if image_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
      ><tmpl_var image_status></span>
     <tmpl_unless images><b>none</b></tmpl_unless>
     </p>
+
     <tmpl_unless all_images_ok><ol><tmpl_loop images>
       <tmpl_unless link_ok><li>
        <b><tmpl_if intref><a href="#<tmpl_var intref>"
@@ -161,9 +180,10 @@ Pages with some problem: <tmpl_var not_ok_cnt><br />
     </ol></tmpl_unless></tmpl_if>
     </tmpl_unless>
 
-    <tmpl_unless all_styles_ok><tmpl_if styles><p class="detaildt">
+    <tmpl_unless style_status_ok><tmpl_if styles><p class="detaildt">
     <b>Styles checked on this page: <tmpl_var style_cnt></b>
-    (<tmpl_var styles_ok> ok): <span
+    (<tmpl_var styles_ok> ok;
+    kwalitee <tmpl_var kw_styles>): <span
     <tmpl_if style_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
      ><tmpl_var style_status></span>
     <tmpl_unless styles><b>none</b></tmpl_unless>

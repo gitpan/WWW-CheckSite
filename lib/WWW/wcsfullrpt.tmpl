@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <!-- $Id: wcsfullrpt.tmpl 450 2006-01-02 01:55:45Z abeltje $ -->
+    <!-- $Id: wcsfullrpt.tmpl 625 2007-04-29 12:30:41Z abeltje $ -->
     <meta http-equiv="Content-type"
           content="text/html; charset=iso-8859-1" />
     <title>WWW::CheckSite full report</title>
@@ -17,7 +17,7 @@ dd ol li  { font-size: smaller;             }
     </style>
   </head>
   <body>
-    <h1>CheckSite report for <tmpl_var name=url escape=HTML></h1>
+    <h1>Kwalitee report for <tmpl_var name=url escape=HTML></h1>
     <h2><tmpl_var title></h2>
 <a name="summary"></a>
 Generated: <tmpl_var now_time><br />
@@ -33,6 +33,7 @@ only</a><br />
     <hr />
     <h2>Summary</h2>
     <hr />
+  <p>
     Checked <tmpl_var page_cnt> pages.<br />
     <tmpl_if did_validate>
       <tmpl_var valid_ok> pages out of
@@ -40,7 +41,9 @@ only</a><br />
     <tmpl_else>
       W3 validation was skipped.
     </tmpl_if><br />
-
+    Kwalitee for the complete site: <tmpl_var kwalitee><br />
+    Pages with some problem: <tmpl_var not_ok_cnt><br />
+  </p>
 <ol><tmpl_loop pages>
   <li<tmpl_unless __ODD__> class="even"</tmpl_unless>>
     <a href="#<tmpl_var intref>"
@@ -49,23 +52,27 @@ only</a><br />
     (returned <span class="<tmpl_if status_ok>green<tmpl_else>red</tmpl_if>"
      ><tmpl_var status_tx></span>; W3 validation
      <span class="<tmpl_if valid>green<tmpl_else>red</tmpl_if>"
-     ><tmpl_var valid_tx></span>
+     ><tmpl_var valid_tx></span>;
+    kwalitee <tmpl_var kwalitee>
     )<br /><tmpl_if link_cnt>
     This page had <tmpl_var link_cnt> links checked;
     <tmpl_var links_ok> successfully followed<tmpl_if links_sk>,
-    <tmpl_var links_sk> skipped</tmpl_if>: <span 
+    <tmpl_var links_sk> skipped</tmpl_if>;
+    kwalitee <tmpl_var kw_links>: <span 
       class="<tmpl_if link_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var link_status></span><br /></tmpl_if><tmpl_if image_cnt>
 
     This page had <tmpl_var image_cnt> images checked;
     <tmpl_var images_ok> successfully loaded<tmpl_if images_sk>,
-    <tmpl_var images_sk> skipped</tmpl_if>: <span
+    <tmpl_var images_sk> skipped</tmpl_if>;
+    kwalitee <tmpl_var kw_images>: <span
       class="<tmpl_if image_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var image_status></span><br /></tmpl_if><tmpl_if style_cnt>
 
     This page had <tmpl_var style_cnt> styles checked;
     <tmpl_var styles_ok> successfully loaded;
-    <tmpl_var vstyles_ok> css-validated: <span
+    <tmpl_var vstyles_ok> css-validated;
+    kwalitee <tmpl_var kw_styles>: <span
       class="<tmpl_if style_status_ok>green<tmpl_else>red</tmpl_if>"
       ><tmpl_var style_status></span>
      </tmpl_if>
@@ -83,23 +90,26 @@ only</a><br />
        title="Open this page in a new window">
     <tmpl_var name=uri escape=HTML></a> returned status 
    <span class="<tmpl_if status_ok>green<tmpl_else>red</tmpl_if>"
-     ><tmpl_var status_tx></span>
+     ><tmpl_var status_tx></span> (<tmpl_var kw_return>)
   </dt>
   <dd>
     <p>
-    Title: <b><tmpl_var name=title escape=HTML></b><br />
+    Title: <b><tmpl_var name=title escape=HTML></b>
+           (<tmpl_var kw_title>)<br />
     Content-type: <tmpl_var ct><br />
-    <a href="http://validator.w3.org/check?uri=<tmpl_var name=uri>"
+    <a href="<tmpl_var name=validator_uri escape=HTML>"
        title="Run W3 validation on this page" target="_blank">
     W3 validation</a>:
     <span class="<tmpl_if valid>green<tmpl_else>red</tmpl_if>"
      ><tmpl_var valid_tx></span><br />
-    Depth: <tmpl_var depth>
+    Depth: <tmpl_var depth><br />
+    Kwalitee: <tmpl_var kwalitee><br />
     </p>
     <tmpl_if links><p class="detaildt">
     <b>Links checked on this page: <tmpl_var link_cnt></b>
     (<tmpl_var links_ok> ok<tmpl_if links_sk>;
-    <tmpl_var links_sk> skipped</tmpl_if>): <span
+    <tmpl_var links_sk> skipped</tmpl_if>;
+    kwalitee <tmpl_var kw_links>): <span
     <tmpl_if link_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
      ><tmpl_var link_status></span>
     <tmpl_unless links><b>none</b></tmpl_unless>
@@ -132,7 +142,8 @@ only</a><br />
 
     <tmpl_if images><p class="detaildt">
     <b>Images checked on this page: <tmpl_var image_cnt></b>
-    (<tmpl_var images_ok> ok): <span
+    (<tmpl_var images_ok> ok;
+    kwalitee <tmpl_var kw_images>): <span
     <tmpl_if image_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
      ><tmpl_var image_status></span>
     <tmpl_unless images><b>none</b></tmpl_unless>
@@ -159,7 +170,8 @@ only</a><br />
 
     <tmpl_if styles><p class="detaildt">
     <b>Styles checked on this page: <tmpl_var style_cnt></b>
-    (<tmpl_var styles_ok> ok): <span
+    (<tmpl_var styles_ok> ok;
+    kwalitee <tmpl_var kw_styles>): <span
     <tmpl_if style_status_ok>class="green"<tmpl_else>class="red"</tmpl_if>
      ><tmpl_var style_status></span>
     <tmpl_unless styles><b>none</b></tmpl_unless>
@@ -171,7 +183,7 @@ only</a><br />
         &lt;link rel="stylesheet" type="<tmpl_var ct>"
         href=&quot;<tmpl_var name=link>&quot; /&gt;
         <tmpl_if intref></a></tmpl_if></b>
-        <br />
+        (<tmpl_var ct>)<br />
         <a href="<tmpl_var name=uri>" target="_blank"
            title="Open this style in new window">
         <tmpl_var name=uri></a> returned status 

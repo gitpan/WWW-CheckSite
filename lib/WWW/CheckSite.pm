@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 456 2006-01-02 02:28:34Z abeltje $
-our $VERSION = '0.016';
+# $Id: CheckSite.pm 630 2007-04-30 14:11:57Z abeltje $
+our $VERSION = '0.017';
 
 =head1 NAME
 
@@ -53,6 +53,7 @@ use Storable qw( nstore retrieve );
 use File::Spec::Functions qw( :DEFAULT rel2abs );
 use File::Basename;
 use File::Path;
+use URI::file;
 
 use WWW::CheckSite::Validator;
 
@@ -143,7 +144,13 @@ sub load {
     -f $wcsfile && -r _ or _die( "", "Cannot find '$wcsfile': $!" );
 
     my $self = retrieve $wcsfile;
+    $self->{v} and print "Loaded '$wcsfile'\n";
     $self->{ $_ } = $args{ $_ } for qw( dir prefix tt v );
+
+    # Backward compatibility wrt {uri}
+    ref $self->{uri} or $self->{uri} = [ $self->{uri} ];
+
+    $self->_set_validator_fmt;
 
     return $self;
 }
@@ -165,25 +172,30 @@ sub validate {
         validate    => $self->{validate},
         strictrules => $self->{strictrules},
         lang        => $self->{lang},
+        myrules     => $self->{myrules},
         v           => $self->{v} > 1,
     );
 
     my( $cnt, $intref ) = ( 0, 'a' );
     $self->{start_time} = time;
     while ( my $info = $wcs->get_page ) {
-        $info->{intref} = $intref++ if $info->{ret_uri} =~ /^\Q$self->{uri}/;
+        $info->{intref} = $intref++
+            if $info->{ret_uri} =~ /^\Q$self->{uri}[0]/;
+
         push @{ $self->{by_depth}{ $info->{depth} } }, $info->{ret_uri};
         $self->{report}{ $info->{ret_uri} } = $info;
 
         $self->{v} and printf "%5u %s (%u links; %u images; %s styles; %s)\n",
                               ++$cnt, @{ $info }{qw( ret_uri link_cnt 
                                                      image_cnt style_cnt)},
-                              defined $info->{valid} ? $info->{valid} != -1
-                                  ? 'valid' : 'not valid' : 'skipped';
+                              $info->{valid} ? $info->{valid} != -1
+                                  ? 'valid' : 'skipped' : 'not valid';
     }
     $self->{spider_time} = time;
 
     $self->{v} and printf "That took %s\n", $self->_spider_time;
+
+    $self->_set_validator_fmt;
 
     if ( $self->{save} ) {
         my $dir = $self->_datadir;
@@ -195,6 +207,28 @@ sub validate {
     }
 }
 
+=begin private
+
+=head2 $wcs->_set_validator_fmt
+
+Set the base format for the validator uri in the reports. It is based
+on the W3 validator.
+
+=end private
+
+=cut
+
+sub _set_validator_fmt {
+    my( $self ) = @_;
+
+    if ( $self->{validate} eq 'by_upload' ) {
+        $self->{validator_fmt} = $WWW::CheckSite::Validator::VALIDATOR_FRM .
+                                 "/check?uri=%s";
+    } else {
+        $self->{validator_fmt} = $WWW::CheckSite::Validator::VALIDATOR_URL;
+    }
+}
+ 
 =head2 $wcs->dump_links( $noskipped )
 
 Return a list with all URLs encountered during site-traversal.
@@ -313,10 +347,12 @@ sub write_ht_report {
         mkpath( $dir, $self->{v} ) or $self->_die( "Cannot mkdir($dir): $!" );
     }
 
+    my $mainuri = ref $self->{uri} ? $self->{uri}[0] : $self->{uri};
     for my $type (qw( summ full )) {
         $self->{rstart} = time;
-        my $report = create_report( "wcs${type}rpt.tmpl",
-                                    @{ $self }{qw( uri by_depth report v )} );
+        my $report = create_report( "wcs${type}rpt.tmpl", $mainuri,
+                                    @{ $self }{qw( by_depth report
+                                                   validator_fmt v )} );
         $self->{rfinish} = time;
 
         $report->param( 
@@ -336,7 +372,9 @@ sub write_ht_report {
             $self->_die( "Cannot create($rptname): $!" );
         print $fh $report->output;
         close $fh or $self->_die( "Write error ($rptname): $!" );
-        $self->{v} and print "Finished writing '$rptname'\n";
+
+        my $furi = URI::file->new_abs( $rptname );
+        $self->{v} and print "Finished writing '$furi'\n";
     }
     return 1;
 }
@@ -356,8 +394,10 @@ sub write_tt_report {
             $self->_die( "Cannot mkdir($dir): $!" );
     }
 
-    my $data = create_report_data( 'all',
-                                   @{ $self }{qw( uri by_depth report v )} );
+    my $mainuri = ref $self->{uri} ? $self->{uri}[0] : $self->{uri};
+    my $data = create_report_data( 'all', $mainuri,
+                                   @{ $self }{qw( by_depth report
+                                                  validator_fmt v )} );
     for my $type (qw( summ full )) {
         my $tt_name = "wcs${type}rpt.tt";
         $self->{rstart} = time;
@@ -367,6 +407,8 @@ sub write_tt_report {
             EVAL_PERL  => 1,
         });
         $self->{rfinish} = time;
+
+        my $rptname = name_outfile( $self->_datadir, $type );
         $report->process( $tt_name, {
             ( map +( $_ => $self->{ $_ } ) => qw( uri by_depth report v ) ),
             ( map +( $_ => $data->{ $_ } ) => keys %$data ),
@@ -380,11 +422,11 @@ sub write_tt_report {
             summlink     => basename( name_outfile( $self->_datadir, 'summ' ) ),
             fulllink     => basename( name_outfile( $self->_datadir, 'full' ) ),
         },
-            name_outfile( $self->_datadir, $type ),
+            $rptname,
         ) || $self->_die( $report->error );
 
-        $self->{v} and printf "Finished writing '%s'\n",
-                              name_outfile( $self->_datadir, $type );
+        my $furi = URI::file->new_abs( $rptname );
+        $self->{v} and print "Finished writing '$furi'\n";
     }
     return 1;
 }
@@ -410,9 +452,9 @@ Load and fill the L<HTML::Template>.
 =cut
 
 sub create_report {
-    my( $tmplnm, $url, $by_depth, $report, $v ) = @_;
+    my( $tmplnm, $v ) = @_[ 0, -1 ];
 
-    my $data = create_report_data( $tmplnm, $url, $by_depth, $report, $v );
+    my $data = create_report_data( @_ );
 
     my $tmpl = HTML::Template->new(
         filename => find_tmpl( $tmplnm, $v ),
@@ -431,12 +473,13 @@ L<HTML::Template> and the L<Template> Toolkit templates.
 =cut
 
 sub create_report_data {
-    my( $tmplnm, $url, $by_depth, $report, $v ) = @_;
+    my( $tmplnm, $url, $by_depth, $report, $validate_fmt, $v ) = @_;
 
     my %data = ( url => $url, title => $report->{ $url }{title},
                  valid_cnt => 0, valid_ok => 0, pages => [ ],
-                 not_ok_cnt => 0 );
+                 not_ok_cnt => 0, kw_total => 0 );
 
+    $v > 1 and print "Using validator: '$validate_fmt'\n";
     foreach my $level ( sort { $a <=> $b } keys %$by_depth ) {
         $v > 1 and printf "[$tmplnm]Level %u, %u page(s)\n", $level,
                           scalar @{ $by_depth->{ $level } };
@@ -444,16 +487,17 @@ sub create_report_data {
         foreach my $uri ( @{ $by_depth->{ $level } } ) {
             my $pinfo = $report->{ $uri };
             $pinfo->{uri} = $uri;
+            $pinfo->{validator_uri} = sprintf $validate_fmt, $uri;
             $pinfo->{status_tx} = status_text( $pinfo->{status} );
             $pinfo->{status_ok} = $pinfo->{status} == 200;
 
             $pinfo->{all_ok} = $pinfo->{status_ok};
-            for my $all_ok (qw( links images styles )) {
-                $pinfo->{ "all_${all_ok}_ok"} = 1;
+            for my $ikey (qw( links images styles )) {
+                $pinfo->{ "all_${ikey}_ok" } = 1;
+                $pinfo->{   "${ikey}_sk"   } = 0;
+                $pinfo->{ "kw_${ikey}_cnt" } = 0;
             }
-            for my $skip (qw( links_sk images_sk styles_sk )) {
-                $pinfo->{ $skip } = 0;
-            }
+
             foreach ( @{ $pinfo->{links} },
                       @{ $pinfo->{images} },
                       @{ $pinfo->{styles} } ) {
@@ -466,8 +510,9 @@ sub create_report_data {
 
                 $pinfo->{all_ok} &&= ( $_->{status_ok} || $_->{status_sk} );
 
-                $_->{text} =~ s/>No text in TAG</>No text in $_->{tag}</
+                $_->{text} =~ s/>No text in TAG</&gt;No text in $_->{tag}&lt;/
                     and $_->{no_text} = 1;
+
                 $_->{"type_$_->{tag}"} = 1;
                 $pinfo->{all_ok} &&= ! $_->{no_text};
                 $_->{link_ok} = ! $_->{no_text} && $_->{status_ok};
@@ -478,12 +523,18 @@ sub create_report_data {
                         ? $_->{valid} == 1 ? 'ok' : 'skipped' : 'not ok';
                     $_->{valid_ok} = $_->{valid}
                         ? $_->{valid} == 1 ? 1 : 1 : 0;
+                    $_->{link_ok} || $_->{status_sk}
+                        and $pinfo->{kw_styles_cnt}++;
                 } elsif ( exists $_->{ct} ) { # this is an image
                     $_->{status_sk} and $pinfo->{images_sk}++;
                     $pinfo->{all_images_ok} &&= $_->{link_ok};
+                    $_->{link_ok} || $_->{status_sk}
+                        and $pinfo->{kw_images_cnt}++;
                 } else {
                     $_->{status_sk} and $pinfo->{links_sk}++;
                     $pinfo->{all_links_ok} &&= $_->{link_ok};
+                    $_->{link_ok} || $_->{status_sk}
+                        and $pinfo->{kw_links_cnt}++;
                 }
             }
 
@@ -498,9 +549,14 @@ sub create_report_data {
                     ? 'ok' : 'not ok' : 'N/A';
             $pinfo->{link_cnt} and 
                 $pinfo->{all_ok} &&= $pinfo->{link_status_ok};
+            $pinfo->{kw_links_cnt} ||= 0;
+            $pinfo->{kw_links} = $pinfo->{link_cnt}
+                ? sprintf "%.2f", $pinfo->{kw_links_cnt}/$pinfo->{link_cnt} : 1;
+            $pinfo->{status_ok} or $pinfo->{kw_links} = 0;
 
-            $pinfo->{image_cnt} and $pinfo->{image_status_ok} =
-                $pinfo->{image_cnt} == $pinfo->{images_ok} +
+            $pinfo->{kw_images_cnt} ||= 0;
+            $pinfo->{kw_images_cnt} and $pinfo->{image_status_ok} =
+                $pinfo->{kw_images_cnt} == $pinfo->{images_ok} +
                                        $pinfo->{images_sk}; 
             $pinfo->{image_status} = $pinfo->{image_cnt} 
                 ? $pinfo->{image_cnt} == $pinfo->{images_ok} +
@@ -508,6 +564,9 @@ sub create_report_data {
                     ? 'ok' : 'not ok' : 'N/A';
             $pinfo->{image_cnt} and 
                 $pinfo->{all_ok} &&= $pinfo->{image_status_ok};
+            $pinfo->{kw_images} = $pinfo->{image_cnt}
+                ? sprintf "%.2f", $pinfo->{kw_images_cnt}/$pinfo->{image_cnt}
+                : 1;
 
             $pinfo->{style_cnt} and $pinfo->{style_status_ok} =
                 $pinfo->{style_cnt} == $pinfo->{styles_ok} +
@@ -518,6 +577,23 @@ sub create_report_data {
                     ? 'ok' : 'not ok' : 'N/A';
             $pinfo->{style_cnt} and 
                 $pinfo->{all_ok} &&= $pinfo->{style_status_ok};
+            $pinfo->{kw_styles_cnt} ||= 0;
+            $pinfo->{kw_styles} = $pinfo->{style_cnt}
+                ? sprintf "%.2f", $pinfo->{kw_styles_cnt}/$pinfo->{style_cnt}
+                : 1;
+
+            $pinfo->{kw_return} = sprintf "%.2f", $pinfo->{status_ok} ? 1 : 0;
+            $pinfo->{kw_title}  = sprintf "%.2f", $pinfo->{title}
+                ? $pinfo->{status_ok} ? 1 : 0 : 0;
+            $pinfo->{kw_valid}  = sprintf "%.2f", 
+                                         $pinfo->{valid_tx} ne 'not ok' ? 1 : 0;
+            my @metrics = qw( return title valid links images styles );
+            $pinfo->{kw_total} = 0;
+            for my $metric (@metrics) {
+                $pinfo->{kw_total} += $pinfo->{ "kw_$metric" };
+            }
+            $pinfo->{kwalitee} = sprintf "%.2f", $pinfo->{kw_total}/@metrics;
+            $data{kw_site} += $pinfo->{kwalitee};
 
             $pinfo->{all_ok} or $data{not_ok_cnt}++;
             $pinfo->{valid} and $data{valid_ok}++;
@@ -527,6 +603,7 @@ sub create_report_data {
     }
 
     $data{page_cnt}    = scalar @{ $data{pages} };
+    $data{kwalitee}    = sprintf "%.2f", $data{kw_site}/$data{page_cnt};
     $data{copyright}   = '&copy; MMV Abe Timmerman &lt;abeltje@cpan.org&gt;';
     $data{wcs_version} = $VERSION;
 

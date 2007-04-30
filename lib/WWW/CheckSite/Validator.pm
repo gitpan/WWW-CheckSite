@@ -2,9 +2,9 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 447 2006-01-01 23:39:05Z abeltje $
-use vars qw( $VERSION $VALIDATOR_URL $VALIDATOR_FRM $VALIDATOR_STYLE );
-$VERSION = '0.012';
+# $Id: Validator.pm 627 2007-04-30 13:16:37Z abeltje $
+use vars qw( $VERSION $VALIDATOR_URL $VALIDATOR_FRM $VALIDATOR_STYLE $XMLLINT );
+$VERSION = '0.016';
 
 =head1 NAME
 
@@ -17,7 +17,7 @@ WWW::CheckSite::Validator - A spider that assesses 'kwalitee' for a site
         uri => 'http://www.test-smoke.org'
     );
 
-    while ( my $info = $wvc->get_page ) {
+    while ( my $info = $wcv->get_page ) {
         # handle the info
     }
 
@@ -61,7 +61,27 @@ use base 'WWW::CheckSite::Spider';
 BEGIN {
     $VALIDATOR_URL   = 'http://validator.w3.org/check?uri=%s';
     $VALIDATOR_FRM   = 'http://validator.w3.org/';
+    $XMLLINT         = 'xmllint';
     $VALIDATOR_STYLE = 'http://jigsaw.w3.org/css-validator/';
+}
+
+=head2 WWW::CheckSite::Validator->new( %args )
+
+Extend C<< WWW::CheckSite::Spider->new >> to check for L<Image::Info>
+so we can do a basic check on the images.
+
+=cut
+
+sub new {
+    my $class = shift;
+    my $self = $class->SUPER::new( @_ );
+
+    $self->{validate} ||= 'by_none';
+    $self->{novalidate} = $self->{validate} eq 'by_none';
+
+    eval qq{use Image::Info qw( image_info )};
+    $self->{can_val_image} = ! $@;
+    return $self;
 }
 
 =head2 $wcs->process_page
@@ -152,6 +172,7 @@ sub check_links {
     my @checked;
     for my $link ( @links ) {
         my $check = URI->new_abs( $link->url, $mech->uri );
+        $self->more_rrules( $check );
         my $in_cache = $cache->has( $check );
         unless ( $in_cache && defined $in_cache->[1] ) {
             if ( $self->{strictrules} && !$self->allowed( $check ) ) {
@@ -164,7 +185,7 @@ sub check_links {
                 $in_cache->[1] = $ua->status;
                 $self->{v} and
                     printf "done(%sok).\n", $ua->success ? '' : 'not ';
-    
+
                 $ua->success && ! $self->ct_can_validate( $ua ) and
                     $in_cache->[0] = WCS_NOCONTENT;
             }
@@ -222,6 +243,7 @@ sub check_images {
     my @checked;
     for my $img ( @images ) {
         my $check = URI->new_abs( $img->url, $mech->base );
+        $self->more_rrules( $check );
         my $in_cache = $cache->has( $check );
         defined $in_cache or
             $in_cache = $cache->set( $check => [ WCS_FOLLOWED ] );
@@ -229,11 +251,21 @@ sub check_images {
             if ( $self->{strictrules} && !$self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
             } else {
-                $self->{v} and print "  HEAD '$check': ";
                 my $ua = $self->new_agent;
-                eval { $ua->head( $check ) };
+                my $method = $self->{can_val_image} ? 'get' : 'head';
+                $self->{v} and print "  \U$method\E '$check': ";
+                eval { $ua->$method( $check ) };
+                my $success = $ua->success;
+
                 $in_cache->[1] = $ua->status;
                 $in_cache->[2] = $ua->ct;
+                my $valid;
+                if ( $method eq 'head' ) {
+                    $valid = $success ? -1 : 0;
+                } else { # it's GET
+                    $valid = $success ? $self->validate_image( $ua ) : 0;
+		}
+                $in_cache->[3] = $valid;
                 $self->{v} and
                     printf "done(%sok).\n", $ua->success ? '' : 'not ';
             }
@@ -243,14 +275,17 @@ sub check_images {
             link   => $img->url,
             uri    => $check->as_string,
             tag    => 'ALT',
-            text   => $img->alt || ">No text in TAG<",
+            text   => ( defined( $img->alt )
+                ? ($img->alt || "")
+                : $self->{novalidate} ? "" : ">No text in TAG<" ),
             status => $in_cache->[1],
             ct     => $in_cache->[2],
+            valid  => $in_cache->[3],
         };
     }
     $stats->{image_cnt} = @images;
     $stats->{images} = \@checked;
-    $stats->{images_ok} = grep $_->{status} == 200 => @checked;
+    $stats->{images_ok} = grep $_->{status} == 200 && $_->{valid} => @checked;
 
     return $stats;
 }
@@ -296,6 +331,7 @@ sub check_styles {
     my @checked;
     for my $sheet ( @styles ) {
         my $check = URI->new_abs( $sheet, $mech->uri );
+        $self->more_rrules( $check );
         my $in_cache = $self->{_cache}->has( $check );
 
         defined $in_cache or
@@ -303,6 +339,7 @@ sub check_styles {
         unless ( $in_cache && defined $in_cache->[1] ) {
             if ( $self->{strictrules} && !$self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
+                $in_cache->[3] = -1;
             } else {
                 my $ua = $self->new_agent;
                 my $method = $self->{validate} =~ /by_(?:upload|uri)/
@@ -314,8 +351,8 @@ sub check_styles {
                     printf "done(%sok).\n", $success ? '' : 'not ';
                 $in_cache->[1] = $ua->status;
                 $in_cache->[2] = $ua->ct;
-                $in_cache->[3] = $self->validate_style( $ua )
-                    if $method eq 'get' && $success;
+                $in_cache->[3] = $method eq 'get' && $success
+                                     ? $self->validate_style( $ua ) : -1;
             }
 	}
 
@@ -350,7 +387,7 @@ sub validate {
     unless ( $self->current_agent->success ) {
         $self->{v} and
             print "Validate @{[$self->current_agent->uri]}: skipped\n";
-        $stats->{valid} = undef;
+        $stats->{valid} = 0;
         return $stats;
     }
 
@@ -407,7 +444,7 @@ sub validate_by_upload {
     my( $self, $stats ) = @_;
 
     eval "use File::Temp";
-    return if $@;
+    $@ and $stats->{valid} = 1, return;
 
     my( $mech ) = @{ $self }{qw( _agent )};
     File::Temp->import( 'tempfile' );
@@ -434,6 +471,37 @@ sub validate_by_upload {
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );
 }
 
+=head2 $wcs->validate_by_xmllint( $stats )
+
+Use the L<xmllint(1)> program to validate the (X)HTML.
+
+=cut
+
+sub validate_by_xmllint {
+    my( $self, $stats ) = @_;
+    my $opts = qq[--postvalid --recover --stream];
+
+    eval "use File::Temp";
+    $@ and $stats->{valid} = 1, return;
+
+    my( $ua ) = @{ $self }{qw( _agent )};
+    File::Temp->import( 'tempfile' );
+    my( $fh, $filename ) = tempfile( 'wcvtempXXXX', SUFFIX => '.html', 
+                                                    UNLINK => 1 );
+    print $fh $ua->content;
+    close $fh;
+
+    $self->{v} and print "[$XMLLINT $opts $filename 2>\&1]\n";
+    $self->{v} and printf "xmllint(%s): %s ", $filename, $ua->uri;
+    $stats->{validate} = $filename;
+
+    my $out = qx[$XMLLINT $opts $filename 2>\&1];
+    $self->{v} and print $out;
+    $stats->{valid} = defined $out
+        ? $out eq '' : -1;
+    $self->{v} and printf " done(%sok)\n", $stats->{valid} == 1 ? "" : "not ";
+}
+
 =head2 $wcs->validate_style( $ua )
 
 Dispatch the validation to the right method.
@@ -442,6 +510,8 @@ Dispatch the validation to the right method.
 
 sub validate_style {
     my( $self, $ua ) = @_;
+
+    $self->{novalidate} and return -1;
 
     my $how_to = $self->{validate} || 'by_none';
     my $validate = "style_$how_to";
@@ -523,6 +593,20 @@ sub style_by_upload {
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );
 
     return $valid;
+}
+
+=head2 $wcs->validate_image( $ua )
+
+This is more like a basic consistency check, that uses C<<
+Image::Info::image_info() >>.
+
+=cut
+
+sub validate_image {
+    my( $self, $ua ) = @_;
+    my $image = $ua->content;
+    my $iinfo = Image::Info::image_info( \$image );
+    return ! $iinfo->{error};
 }
 
 =head2 $wcs->ct_can_validate( $ua )

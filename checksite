@@ -3,8 +3,8 @@ use strict;
 use warnings;
 $|=1;
 
-# $Id: checksite 454 2006-01-02 02:17:28Z abeltje $
-our $VERSION = '0.069';
+# $Id: checksite 557 2006-10-08 09:50:08Z abeltje $
+our $VERSION = '0.070';
 
 =head1 NAME
 
@@ -23,8 +23,11 @@ checksite - Check the contents of a website
     --load               Load the validation results
 
     --novalidate         Skip the W3 validation
+    --by_xmllint         Validate by using the xmllint program
     --by_uri             Validate by sending the uri to W3
     --by_upload          Validate by uploading the contents to W3
+
+    --disallow <path>    Add Disallow: rules to robots.txt (multiple)
 
     --nostrictrules      Do not impose /robots.txt on the validator
 
@@ -32,6 +35,8 @@ checksite - Check the contents of a website
 
     -v                   increase verbosity (multiple)
     --help|-h            This message
+
+See L<WWW::CheckSite::Manual> for more information.
 
 =head1 DESCRIPTION
 
@@ -112,12 +117,14 @@ use WWW::CheckSite::Validator;
 use Getopt::Long;
 my %opt = (
     validate    => 1,
-    by_uri      => 1,
+    by_uri      => undef,
+    by_xmllint  => undef,
     by_upload   => undef,
     strictrules => 1,
     lang        => undef,
+    disallow    => [ ],
 
-    uri         => undef,
+    uri         => [ ],
     prefix      => undef,
     save        => 1,
     load        => 0,
@@ -126,25 +133,30 @@ my %opt = (
     v           => 0,
 );
 GetOptions \%opt => qw(
-    uri|u=s           prefix|p=s          dir|d=s
+    uri|u=s@          prefix|p=s          dir|d=s
     save!             load!               tt!
     strictrules!      ua_class=s
     lang|l=s
     validate!
-    by_uri|by_url:s   by_upload|by_upl:s  by_none
+    disallow=s@
+    by_uri|by_url:s   by_upload|by_upl:s  by_xmllint:s  by_none
     v+                help|h
 ) or usage();
 $opt{help} and usage();
 
 # Check the mandatory arguments
-defined $opt{uri} or $opt{uri} = shift;
+@{ $opt{uri} } or $opt{uri} = [ @ARGV ];
 defined $opt{uri} || $opt{load} or usage();
 defined $opt{prefix} or usage();
 
 # Set validation method
 my $validate = $opt{validate}
-    ? defined $opt{by_upload} ? 'by_upload'
-    : $opt{by_none} ? 'by_none' : 'by_uri' : 'by_none';
+    ? defined $opt{by_xmllint} ? 'by_xmllint'
+        : defined $opt{by_upload} ? 'by_upload'
+            : 'by_uri' : 'by_none';
+
+$opt{by_xmllint} && $opt{by_xmllint} !~ /^(?:0|1)?$/ and
+    $WWW::CheckSite::Validator::XMLLINT = $opt{by_xmllint};
 $opt{by_upload} && $opt{by_upload} !~ /^0|1$/ and
     $WWW::CheckSite::Validator::VALIDATOR_FRM = $opt{by_upload};
 $opt{by_uri} && $opt{by_uri} !~ /^0|1$/ and
@@ -166,6 +178,7 @@ if ( $opt{load} ) {
         lang        => $opt{lang},
         ua_class    => $opt{ua_class},
         tt          => $opt{tt},
+        myrules     => $opt{disallow},
 
         prefix      => $opt{prefix},
         dir         => $opt{dir},
@@ -198,6 +211,8 @@ Options:
                          Optional alternative uri
 
     --nostrictrules      Do not impose /robots.txt on the validator
+
+    --disallow <path>    Add Disallow: rules to robots.txt (multiple)
 
     --lang|-l <lang>     Set language(s) for Accept-Language: header
 

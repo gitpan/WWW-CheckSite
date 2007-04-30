@@ -1,0 +1,259 @@
+=head1 NAME
+
+WWW::CheckSite::Manual - A description of the metrics used in this package
+
+=head1 SYNOPSIS
+
+This document contains a description of modules and tools in this suite.
+
+=over 4
+
+=item B<Kwalitee>
+
+=item B<checksite>
+
+=begin unfinished
+
+=item B<WWW::CheckSite>
+
+=item B<WWW::CheckSite::Validator>
+
+=item B<WWW::CheckSite::Spider>
+
+=end unfinished
+
+=back
+
+=head1 DESCRIPTION
+
+=head2 Kwalitee
+
+The idea behind this package is to provide an analysis of items
+contained in a web-site. We use the word I<kwalitee> because it looks
+and sounds like I<quality> but just isn't. The metrics used to assess
+I<kwalitee> only give an indication of the technical state a web-site is
+in, and do not reflect on the user experience of I<quality> of that web-site.
+
+At the heart of the package is the I<spider> that fetches all the pages
+referred to within the web-site. For each page that is fetched a number of
+things is checked. Here is an explanation of the kwalitee metrics:
+
+=over 4
+
+=item B<* return status>
+
+The most basic check for a web-page is to see if it can be fetched. The
+HTTP return-status should be B<200 OK>.
+
+SCORE: 0 for return status other than 200; 1 for return status 200
+
+=item B<* title>
+
+The next check is to see if the C<< <title></title> >> tag-pair has content.
+
+SCORE: 0 for not content; 1 for content
+
+=item B<* valid>
+
+The next check is to see if the (X)HTML in the page validates. The
+default behaviour is to use the validator available on
+L<http://validator.w3.org>
+
+SCORE: 0 for not valid, 1 for valid or validation disabled
+
+=item B<* links>
+
+The next check is to see if the web-page does not contain "dead links".
+
+All hyperlinks (C<< <a href=>, <area href=> >>) are checked with a
+HTTP I<HEAD> request to see if they can be "followed". URLs that have
+the same origin as the primary url will also be put on the
+"to-fetch-list" of the spider.
+
+MAX SCORE: 1 (do not count urls excluded by robot-rules/exclude pattern)
+
+=item * B<images>
+
+The next check is to see if the web-page does not contain "dead images".
+
+All images (C<< <img src=>, <input type=image> >>) are checked with a
+HTTP I<HEAD> request to see if they exist on the server. If the
+L<Image::Info> module is available, the image is fetched from the
+server and a basic sanity test on the image is done.
+
+MAX SCORE: 1 (do not count images excluded by robot-rules/exclude pattern)
+
+=item * B<styles>
+
+The next check is to see if the web-page does not contain "dead style
+references".
+
+All styles referenced in C<< <link rel=stylesheet type=text/css> >>
+are fetched and if validation is switched on, they will be sent to the
+css-validator at: L<http://jigsaw.w3.org/validator>
+
+TODO: Extract inline styles, and send them of for validation.
+
+MAX SCORE: 1
+
+=item B<kwalitee>
+
+Every individual page can have a maximum of B<6> kwalitee points that
+lead to a I<kwalitee> of B<1.00>. For the complete web-site the mean of
+the page scores is taken and presented as a fraction of 1.
+
+=back
+
+=head2 checksite
+
+This script is a wrapper around L<WWW::CheckSite> that supports some
+command-line options to tweak the behaviour of the module.
+
+Here is an explanation of these options:
+
+=over 4
+
+=item B<< [--uri|-u] <uri> >> (mandatory unless --load)
+
+This specifies the uri to be spidered. The I<--uri> option-qualifier
+is optional. I<--uri> can be abbreviated to I<-u>.
+
+=item B<< --prefix|-p <prefix> >> (mandatory)
+
+This option specifies a prefix that will be used as a subdirectory
+name which is used to store the saved spider data and the
+reports. I<--prefix> can be abbreviated to I<-p>.
+
+The subdirectory is created the current directory, or in the directory
+specified with the I<--dir> option. The data stored as a result of the
+I<--save> option will be in this subdirectory with the name F<<
+<prefix>.wcs >>
+
+=item B<< --dir|-d <directory> >>
+
+This option specifies the base directory for storing the
+data. I<--dir> can be abbreviated to I<-d>.
+
+=item B<--save> or B<--nosave>
+
+This option specifies that the spider data should be saved. The
+default behaviour is to save the data, if you do not want that, use
+I<--nosave>. The saved data can later be used to regenerate the
+reports with the I<--load> option. The data is stored as F<<
+<directory>/<prefix>/<prefix>.wcs >> with C<< Storable::nstore()
+>>. I<--[no]save> cannot be abbreviated.
+
+See also: WWW::CheckSite Report-Templates
+
+=item B<--load>
+
+This options specifies that you want to load the results of a previous
+run and not do an actual run of the programme. This option is useful
+to regenerate the reports. I<--load> cannot be abbreviated.
+
+See also: WWW::CheckSite Report-Templates
+
+=item B<--validate> or B<--novalidate>
+
+This option specifies that HTML- and CSS-validation should be
+done. The default behaviour is to validate by uri. That means the url
+that is to be validated is send to the validation service and should
+be accessible for that service. If you do not want the validation, use
+the I<--novalidate> option. I<--[no]validation> cannot be abbreviated.
+
+See also: checksite B<--by_uri> and B<--by_upload>
+
+=item B<< --by_uri [validator-url-mask] >>
+
+This option sets the validation method to use the uri interface
+(unless I<--novalidate> is specified). You can optionally specify a
+mask for an alternative HTML-validator site. The default HTML
+validator url mask is B<http://validator.w3.org/check?uri=%s>, where
+the C<%s> is a sprintf() placeholder for the uri to be validated. The
+optional I<validator-url-mask> can be used to accommodate a local copy
+of the W3 HTML validator (see L<http://validator.w3.org/source/>).
+
+B<NOTE>: This option does only influence the form used for
+CSS-validation at L<http://jigsaw.w3.org/css-validator/>, not the
+CSS-validation service used.
+
+I<--by_uri> cannot be abbreviated.
+
+=item B<< --by_upload [validator-url] >>
+
+This option sets the validation method to use the upload interface
+(unless I<--novalidate> is specified). All the content to be validated
+(HTML and CSS) is saved as a local file (using L<File::Temp>). You can
+optionally specify an alternative HTML-validator site. The default
+HTML validator url is B<http://validator.w3.org/>, and the second form
+on the page is used.  The optional I<validator-url> can be used to
+accommodate a local copy of the W3 HTML validator (see
+L<http://validator.w3.org/source/>).
+
+B<NOTE>: This option does only influence the form used for
+CSS-validation at L<http://jigsaw.w3.org/css-validator/>, not the
+CSS-validation service used.
+
+I<--by_upload> cannot be abbreviated.
+
+=item B<--by_none>
+
+This option is another way to specify I<--novalidate>.
+
+I<--by_none> cannot be abbreviated.
+
+=item B<< --lang|-l <accept-language> >>
+
+This option can be used to force a web-server to return web-pages in the
+specified language (if applicable). The I<accept-language> argument
+can be a simple two letter language code as specified in ISO 639, or a
+complete Accept-language: field as described in section 14.4 of RFC
+2616.
+
+B<NOTE>: My apache config says:
+
+  # Note 3: In the case of 'ltz' we violate the RFC by using a three
+  # char specifier. There is 'work in progress' to fix this and get
+  # the reference data for rfc1766 cleaned up.
+
+So there may be more weird stuff out there, but since you are supposed
+to be using this on your own web-sites only, you should know about that!
+
+I<--lang> can be abbreviated to I<-l>.
+
+=item B<< --ua_class <ua_class> >>
+
+This option can be used to override the default user-agent class
+L<WWW::Mechanize>. The new user-agent class could be a
+I<WWW::Mechanize> descendant that caters for special needs:
+
+    package BA_Mech;
+    # This package sets credentials for basic authentication
+    use base 'WWW::Mechanize';
+    sub get_basic_credentials { ( 'abeltje', '********' ) }
+    1;
+
+and call C<checksite> like
+
+    checksite -p mysite --ua_class BA_Mech http://www.mysite.org
+
+=back
+
+=head1 AUTHOR
+
+Abe Timmerman, C<< <abeltje@cpan.org> >>
+
+$Id: Manual.pod 472 2006-04-02 12:16:16Z abeltje $
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright MMV-MMVI Abe Timmerman, All Rights Reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+=cut

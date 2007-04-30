@@ -4,7 +4,7 @@ use warnings;
 use FindBin;
 use File::Spec::Functions;
 
-# $Id: 20checksite.t 449 2006-01-01 23:52:30Z abeltje $
+# $Id: 20checksite.t 559 2006-10-08 09:54:46Z abeltje $
 use Test::More tests => 10;
 
 my $verbose = $ENV{WCS_VERBOSE} || 0;
@@ -14,7 +14,7 @@ use_ok 'WWW::CheckSite';
 {
     my $wcs = WWW::CheckSite->new( v => $verbose,
         prefix => 'xxxtest',
-        uri    => 'file://$FindBin::Bin/docroot/index.html',
+        uri    => ['file://$FindBin::Bin/docroot/index.html'],
     );
     isa_ok $wcs, 'WWW::CheckSite';
 }
@@ -26,7 +26,7 @@ use_ok 'WWW::CheckSite';
     ), 'loaded info from saved data';
     isa_ok $wcs, 'WWW::CheckSite';
 
-    is $wcs->{uri}, 'http://www.test-smoke.org/', 'uri was set';
+    is $wcs->{uri}[0], 'http://www.test-smoke.org/', 'uri was set';
 
     ok $wcs->write_report, "write_report()";
 

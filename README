@@ -1,4 +1,4 @@
-README for WWW::CheckSite 0.016
+README for WWW::CheckSite 0.017
 ===============================
 This program will spider from the specified url and check the
 availability of the links, images and stylesheets on each page. Pages

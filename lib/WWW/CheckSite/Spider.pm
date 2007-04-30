@@ -2,9 +2,9 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 446 2006-01-01 23:25:34Z abeltje $
+# $Id: Spider.pm 626 2007-04-30 13:13:09Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.013';
+$VERSION = '0.019';
 
 =head1 NAME
 
@@ -133,14 +133,19 @@ sub new {
         Carp::croak( "No uri to spider specified!" );
     };
 
-    $opts{_self_base} ||= $opts{uri};
+    $opts{_self_base} ||= $opts{uri}->[0];
     $opts{_self_base} =~ s|^(.+/)(.+\.s?html?)|$1|;
     $opts{_self_base} = URI->new( $opts{_self_base} )->canonical->as_string;
-    $opts{uri} = URI->new( $opts{uri} )->canonical->as_string;
+
+    $opts{uri_base} = [ map {
+        ( my $base = $_ ) =~ s|^(.+/)(.+\.s?html?)|$1|;
+        URI->new( $base )->canonical->as_string;
+    } @{ $opts{uri} } ];
+    $opts{uri} = [map URI->new( $_ )->canonical->as_string => @{ $opts{uri} }];
 
     defined $opts{exclude} or $opts{exclude} = '[#?].*$';
     defined $opts{myrules} or $opts{myrules} = [ ];
-    $opts{strictrules} and $opts{_norules} = 0;
+    $opts{_norules} = ! ( @{ $opts{myrules} } || $opts{strictrules} );
 
     $opts{_stack} = new_stack();
     $opts{_cache} = new_cache();
@@ -150,9 +155,13 @@ sub new {
     my $self = bless \%opts, $class;
     $self->init_agent;
     $self->init_robotrules;
-    if ( $self->uri_ok( $self->{uri} ) ) {
-        $self->{_stack}->push( $self->{uri} );
-        $self->{_cache}->set( $self->{uri} => [ WCS_TOSPIDER, undef, 1 ] );
+    for ( my $i = $#{ $self->{uri} }; $i >= 0; $i-- ) {
+        my $uri  = $self->{uri}[ $i ];
+        my $base = $self->{uri_base}[ $i ];
+        if ( $self->uri_ok( $uri ) ) {
+            $self->{_stack}->push( [ $uri, $base ] );
+            $self->{_cache}->set( $uri => [ WCS_TOSPIDER, undef, 1 ] );
+        }
     }
 
     return $self;
@@ -172,7 +181,15 @@ sub get_page {
     return unless $stack->size; # End of iteration
 
     my $in_cache;
-    my $uri = $stack->pop;
+    my $item = $stack->pop;
+    my $uri;
+    if ( ref $item ) {
+        $uri = $item->[0];
+        $self->{_self_base} = $item->[1];
+    } else {
+        $uri = $item;
+    }
+
     $uri and $in_cache = $cache->has( $uri );
     while ( defined $uri && $in_cache && !($in_cache->[0] & WCS_TOSPIDER) ) {
         $uri = $stack->pop;
@@ -232,6 +249,10 @@ sub _update_stack {
     my @candidates = $self->links_filtered;
 
     my $new_base = $mech->uri;
+
+    $new_base->canonical ne URI->new( $base )->canonical
+        and $cache->set( $new_base => $this_page );
+
     foreach my $link ( @candidates ) {
         my $new   = URI->new_abs( $link->url, $new_base )->as_string;
         my $check = $self->strip_uri( $new );
@@ -331,9 +352,11 @@ Return the URI to be spidered or C<undef> for skipping.
 
 sub filter_link {
     my( $self, $uri ) = @_;
-    return $uri =~ m!^(?:mailto:|mms://|javascript:)!i
-        ? undef
-        : $uri;
+    my $check = URI->new( $uri );
+    defined $check->scheme or return $uri;
+    return $check->scheme =~ /^(:?https|http|ftp|file)$/
+        ? $uri
+        : undef;
 }
 
 =head2 $spider->strip_uri( $uri )
@@ -454,6 +477,32 @@ robot.
 You can add rules for disallowing pages by specifying a list of lines
 in the F<robots.txt> syntax to C<< @{ $self->{myrules} } >>.
 
+=head2 $spider->more_rrules( $url )
+
+Check to see if the F<robots.txt> file for this C<$url> has already
+been loaded. If not, fetch the file and add the rules to the C<<
+$self->{_r_rules} >> object.
+
+=cut
+
+sub more_rrules {
+    my( $self, $url ) = @_;
+
+    my $rr_url = URI->new_abs( '/robots.txt', $url );
+
+    my $in_cache = $self->{_cache}->has( $rr_url );
+    unless ( $in_cache ) {
+        my $ua = $self->new_agent;
+        $self->{v} and print "Robot rules: $rr_url: ";
+        $ua->get( $rr_url );
+        $ua->success and $self->{_r_rules}->parse( $rr_url, $ua->content );
+        $self->{v} and printf "done(%sok).\n", $ua->success ? '' : 'not ';
+        $self->{v} && $ua->success
+            and printf "Setting rules:\n%s\n", $ua->content;
+        $self->{_cache}->set( $rr_url => [ WCS_SPIDERED, $ua->status, 0 ] );
+    }
+}
+
 =head2 $spider->uri_ok( $uri )
 
 This will determine whether this uri should be spidered. Rules are simple:
@@ -528,6 +577,7 @@ sub init_robotrules {
     my $rua = $self->new_agent;
     $rua->get( $robots_uri );
     $self->{v} and printf "done(%sok).\n", $rua->success ? '' : 'not ';
+    $self->{_cache}->set( $robots_uri, [ WCS_SPIDERED, $rua->status, 0 ] );
     my $robots_txt = $rua->success ? $rua->content : "";
     $robots_txt ||= @{ $self->{myrules} }
         ? "User-Agent: *\n"
@@ -542,7 +592,7 @@ sub init_robotrules {
     $self->{v} and print "Setting rules:\n$robots_txt\n";
 
     $rules->parse( $robots_uri, $robots_txt )
-        if $self->{uri} =~ m|^https?://|; # problem with file:// uris
+        if $self->{uri}[0] =~ m|^https?://|; # problem with file:// uris
 
     $self->{_r_rules} =  $rules;
 }

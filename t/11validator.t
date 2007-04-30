@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-# $Id: 11validator.t 440 2005-12-04 16:11:04Z abeltje $
+# $Id: 11validator.t 559 2006-10-08 09:54:46Z abeltje $
 use Test::More;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs abs2rel );
@@ -30,24 +30,31 @@ my( $port, $pid, $s ) = ( 54321 );
 }
 END { $pid and kill 9, $pid }
 
+my $imgreq;
+BEGIN {
+    eval qq{use Image::Info qw( image_info )};
+    $imgreq = $@ ? 'HEAD' : 'GET';
+#    diag "will be ${imgreq}ing images($@)";
+}
+
 my %test = (
     "http://localhost:$port/index.html" => {
-        head => 0, check => 1, fetch => 1, validate => 0,
+        head => '', check => 1, fetch => 1, validate => 0,
     },
     "http://localhost:$port/linkbroken.html" => {
-        head => 1, check => 1, fetch => 1, validate => 0,
+        head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
     "http://localhost:$port/imagebroken.html" => {
-        head => 1, check => 1, fetch => 1, validate => 0,
+        head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
     "http://localhost:$port/areabroken.html" => {
-        head => 1, check => 1, fetch => 1, validate => 0,
+        head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
     "http://localhost:$port/doesnotexist.html" => {
-        head => 1, check => 1, fetch => 1, validate => 0,
+        head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
     "http://localhost:$port/dot.gif" => {
-        head => 1, check => 1, fetch => 0, validate => 0,
+        head => $imgreq, check => 1, fetch => 0, validate => 0,
     },
 );
 
@@ -58,13 +65,13 @@ use_ok 'WWW::CheckSite::Validator';
     my $out = tie *STDOUT, 'CatchOut';
     ok my $wcs = WWW::CheckSite::Validator->new(
         validate => 'by_none',
-        uri      => "http://localhost:$port/index.html",
+        uri      => ["http://localhost:$port/index.html"],
         v        => 1,
     ), "called new()";
     isa_ok $wcs, 'WWW::CheckSite::Validator';
 
     like $$out, qr/^Robot rules/m, 'init robot rules';
-    like $$out, qr/^  Check '$wcs->{uri}'/m, "checked (rr) base uri";
+    like $$out, qr/^  Check '$wcs->{uri}[0]'/m, "checked (rr) base uri";
 
     my @pages;
     while ( defined( my $page = $wcs->get_page ) ) {
@@ -72,15 +79,20 @@ use_ok 'WWW::CheckSite::Validator';
     }
 
     for my $page ( keys %test ) {
-        if ( $test{ $page }{head} ) {
-            like $$out, qr/^  HEAD '$page': done/m, "Found HEAD request";
+        my $request = $test{ $page }{head};
+        if ( $request ) {
+            like $$out, qr/^  $request '$page': done/m,
+                 "Found $request request ($page)";
         } else {
-            unlike $$out, qr/^  HEAD '$page': done/m, "Skipped HEAD request";
+            unlike $$out, qr/^  HEAD '$page': done/m,
+                   "Skipped HEAD request ($page)";
         }
         if ( $test{ $page }{fetch} ) {
-            like $$out, qr/^Fetch: '$page': done/m, "Found GET request";
+            like $$out, qr/^Fetch: '$page': done/m,
+                 "Found GET request ($page)";
         } else {
-            unlike $$out, qr/^Fetch: '$page': done/m, "Skipped GET request";
+            unlike $$out, qr/^Fetch: '$page': done/m,
+                   "Skipped GET request ($page)";
         }
     }
 }
