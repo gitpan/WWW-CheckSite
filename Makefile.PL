@@ -2,7 +2,7 @@
 use strict;
 use 5.006;
 
-# $Id: Makefile.PL 453 2006-01-02 02:11:27Z abeltje $
+# $Id: Makefile.PL 647 2007-05-13 21:27:57Z abeltje $
 use ExtUtils::MakeMaker;
 
 # This may be crude...
@@ -21,7 +21,7 @@ WriteMakefile(
         'Storable'        => 2.06, # Earliest version tested
         'Time::HiRes'     => 0,
         'LWP'             => 0,
-        'WWW::Mechanize'  => 1.08,
+        'WWW::Mechanize'  => 1.20,
         'WWW::RobotRules' => 0,
         %template
     },

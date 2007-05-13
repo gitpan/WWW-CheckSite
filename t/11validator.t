@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-# $Id: 11validator.t 559 2006-10-08 09:54:46Z abeltje $
+# $Id: 11validator.t 635 2007-04-30 21:32:55Z abeltje $
 use Test::More;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs abs2rel );
@@ -70,7 +70,7 @@ use_ok 'WWW::CheckSite::Validator';
     ), "called new()";
     isa_ok $wcs, 'WWW::CheckSite::Validator';
 
-    like $$out, qr/^Robot rules/m, 'init robot rules';
+    like $$out, qr/^Setting rules/m, 'init robot rules';
     like $$out, qr/^  Check '$wcs->{uri}[0]'/m, "checked (rr) base uri";
 
     my @pages;

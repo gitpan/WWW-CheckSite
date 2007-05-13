@@ -2,9 +2,9 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 627 2007-04-30 13:16:37Z abeltje $
+# $Id: Validator.pm 633 2007-04-30 21:08:56Z abeltje $
 use vars qw( $VERSION $VALIDATOR_URL $VALIDATOR_FRM $VALIDATOR_STYLE $XMLLINT );
-$VERSION = '0.016';
+$VERSION = '0.017';
 
 =head1 NAME
 
@@ -175,7 +175,8 @@ sub check_links {
         $self->more_rrules( $check );
         my $in_cache = $cache->has( $check );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            if ( $self->{strictrules} && !$self->allowed( $check ) ) {
+            $self->more_rrules( $check );
+            if ( ! $self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
                 $self->{v} and print "  HEAD '$check': skipped.\n";
             } else {
@@ -248,7 +249,8 @@ sub check_images {
         defined $in_cache or
             $in_cache = $cache->set( $check => [ WCS_FOLLOWED ] );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            if ( $self->{strictrules} && !$self->allowed( $check ) ) {
+            $self->more_rrules( $check );
+            if ( ! $self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
             } else {
                 my $ua = $self->new_agent;
@@ -337,7 +339,8 @@ sub check_styles {
         defined $in_cache or
             $in_cache = $cache->set( $check => [ WCS_FOLLOWED ] );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            if ( $self->{strictrules} && !$self->allowed( $check ) ) {
+            $self->more_rrules( $check );
+            if ( ! $self->allowed( $check ) ) {
                 $in_cache->[1] = '999';
                 $in_cache->[3] = -1;
             } else {

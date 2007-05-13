@@ -4,8 +4,8 @@ use warnings;
 use FindBin;
 use File::Spec::Functions;
 
-# $Id: 20checksite.t 559 2006-10-08 09:54:46Z abeltje $
-use Test::More tests => 10;
+# $Id: 20checksite.t 643 2007-05-13 12:35:45Z abeltje $
+use Test::More tests => 13;
 
 my $verbose = $ENV{WCS_VERBOSE} || 0;
 
@@ -14,9 +14,21 @@ use_ok 'WWW::CheckSite';
 {
     my $wcs = WWW::CheckSite->new( v => $verbose,
         prefix => 'xxxtest',
+        uri    => 'file://$FindBin::Bin/docroot/index.html',
+    );
+    isa_ok $wcs, 'WWW::CheckSite';
+    is_deeply $wcs->{uri}, ['file://$FindBin::Bin/docroot/index.html'],
+             "found an arryref for uri";
+}
+
+{
+    my $wcs = WWW::CheckSite->new( v => $verbose,
+        prefix => 'xxxtest',
         uri    => ['file://$FindBin::Bin/docroot/index.html'],
     );
     isa_ok $wcs, 'WWW::CheckSite';
+    is_deeply $wcs->{uri}, ['file://$FindBin::Bin/docroot/index.html'],
+             "found an arryref for uri";
 }
 
 {

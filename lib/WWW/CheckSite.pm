@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 630 2007-04-30 14:11:57Z abeltje $
-our $VERSION = '0.017';
+# $Id: CheckSite.pm 648 2007-05-13 21:30:35Z abeltje $
+our $VERSION = '0.018';
 
 =head1 NAME
 
@@ -112,6 +112,9 @@ sub new {
 
     exists $args{prefix} && length $args{prefix} or
         _die( "", "Usage: WWW::CheckSite->load( prefix => 'xxx' )" );
+
+    # Backward compatibility wrt {uri}
+    ref $args{uri} or $args{uri} = [ $args{uri} ];
 
     bless \%args, $class;
 }

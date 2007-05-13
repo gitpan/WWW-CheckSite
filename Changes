@@ -10,6 +10,85 @@ The filelists have a short symbolic indicator:
 
 Enjoy!
 ___________________________________________________________________________
+[   648] By: abeltje                          on 2007-05-13 23:30:35 +0200
+        Log: * prepare for release 0.018
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   647] By: abeltje                          on 2007-05-13 23:27:57 +0200
+        Log: * [CHANGE] rt #27099 by Peter Karman
+	      + Up the required version of WWW::Mechanize to 1.20
+		 * we need $mech->uri to be a URI object
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Makefile.PL
+___________________________________________________________________________
+[   643] By: abeltje                          on 2007-05-13 14:35:45 +0200
+        Log: * [CHANGE] bug-report #26930 by Slaven Rezic
+	       * FIX: WWW::CheckSite::Spider backward compat: {uri} wants
+		 an ARRAYref now
+	       * FIX: WWW::CheckSite backward compat: {uri} wants an
+		 ARRAYref now
+	       + ADD: tests for the above
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm,
+	     /checksite/lib/WWW/CheckSite.pm, /checksite/t/01spider.t,
+	     /checksite/t/20checksite.t
+___________________________________________________________________________
+[   642] By: abeltje                          on 2007-05-04 13:31:29 +0200
+        Log: * [MERGE] revert 624
+	       * HTTP::Server::Simple 0.27 gave some trouble on other
+		 systems
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           - /checksite/t/lib/HTTP/Server/Simple/CGI
+           ! /checksite/t/lib/HTTP/Server/Simple/CGI.pm,
+	     /checksite/t/lib/HTTP/Server/Simple.pm
+___________________________________________________________________________
+[   638] By: abeltje                          on 2007-04-30 23:42:38 +0200
+        Log: * Regenerate Changes for WWW::CheckSite 0.017_01
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
+[   637] By: abeltje                          on 2007-04-30 23:39:56 +0200
+        Log: * [CHANGE]
+	       + ADD: the --exclude option to override the default exclude
+		 pattern
+	       + ADD: *experimental* support for Config::Auto
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[   636] By: abeltje                          on 2007-04-30 23:37:28 +0200
+        Log: * [CHANGE]
+	       * prepare for version 0.018
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/README
+___________________________________________________________________________
+[   635] By: abeltje                          on 2007-04-30 23:32:55 +0200
+        Log: * [CHANGE]
+	       * FIX: the output has changed, fix the test
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/t/11validator.t
+___________________________________________________________________________
+[   634] By: abeltje                          on 2007-04-30 23:09:39 +0200
+        Log: * [CHANGE]
+	       * Prepare a new snapshot for 0.017_01
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   633] By: abeltje                          on 2007-04-30 23:08:56 +0200
+        Log: * [CHANGE]
+	       * robots.txt from the main_uri is now only read with
+		 {strictrules}
+	       * robots.txt for *all sites* with links, images and styles
+		 pointing to them, is fetched and used
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm,
+	     /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   631] By: abeltje                          on 2007-04-30 16:13:27 +0200
+        Log: * Regenerate Changes for WWW::CheckSite 0.017
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
 [   630] By: abeltje                          on 2007-04-30 16:11:57 +0200
         Log: * prepare for WWW::CheckSite 0.17
         Url: http://source.test-smoke.org/repos/tools/checksite

@@ -1,4 +1,4 @@
-README for WWW::CheckSite 0.017
+README for WWW::CheckSite 0.018
 ===============================
 This program will spider from the specified url and check the
 availability of the links, images and stylesheets on each page. Pages
@@ -28,7 +28,7 @@ To install this module, run the following commands:
 
 COPYRIGHT & LICENSE
 ===================
-Copyright MMV Abe Timmerman, All Rights Reserved.
+Copyright MMV, MMVII Abe Timmerman, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,8 +1,8 @@
 #! perl -w
 use strict;
 
-# $Id: 01spider.t 559 2006-10-08 09:54:46Z abeltje $
-use Test::More tests => 10;
+# $Id: 01spider.t 643 2007-05-13 12:35:45Z abeltje $
+use Test::More tests => 13;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs );
 use File::Basename;
@@ -28,7 +28,18 @@ ok exists &WCS_OUTSCOPE,  "WCS_OUTSCOPE";
 
 {
     my $sp = WWW::CheckSite::Spider->new(
+        { v => $verbose, uri => "file://$findbin/docroot/index.html" }
+    );
+    isa_ok $sp, 'WWW::CheckSite::Spider';
+    is_deeply $sp->{uri}, ["file://$findbin/docroot/index.html"],
+             "Got array with uri's";
+}
+
+{
+    my $sp = WWW::CheckSite::Spider->new(
         { v => $verbose, uri => ["file://$findbin/docroot/index.html"] }
     );
     isa_ok $sp, 'WWW::CheckSite::Spider';
+    is_deeply $sp->{uri}, ["file://$findbin/docroot/index.html"],
+             "Got array with uri's";
 }

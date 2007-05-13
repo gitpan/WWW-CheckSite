@@ -2,9 +2,9 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 626 2007-04-30 13:13:09Z abeltje $
+# $Id: Spider.pm 643 2007-05-13 12:35:45Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.019';
+$VERSION = '0.021';
 
 =head1 NAME
 
@@ -102,7 +102,7 @@ Currently supported options (the rest will be set but not used!):
 
 =over 4
 
-=item * B<uri> => <start_uri> [mandatory]
+=item * B<uri> => <start_uri> || <\@start_uri> [mandatory]
 
 =item * B<ua_class> => by default L<WWW::Mechanize>
 
@@ -132,6 +132,7 @@ sub new {
         require Carp;
         Carp::croak( "No uri to spider specified!" );
     };
+    ref $opts{uri} or $opts{uri} = [ $opts{uri} ];
 
     $opts{_self_base} ||= $opts{uri}->[0];
     $opts{_self_base} =~ s|^(.+/)(.+\.s?html?)|$1|;
@@ -572,13 +573,19 @@ sub init_robotrules {
         require Carp;
         Carp::croak( "Error in base-url: $@" );
     };
-    $self->{v} and print "Robot rules: '$robots_uri': ";
 
-    my $rua = $self->new_agent;
-    $rua->get( $robots_uri );
-    $self->{v} and printf "done(%sok).\n", $rua->success ? '' : 'not ';
-    $self->{_cache}->set( $robots_uri, [ WCS_SPIDERED, $rua->status, 0 ] );
-    my $robots_txt = $rua->success ? $rua->content : "";
+    my $robots_txt = "";
+    if ( $self->{strictrules} ) {
+        $self->{v} and print "Robot rules: '$robots_uri': ";
+        my $rua = $self->new_agent;
+        $rua->get( $robots_uri );
+        $self->{v} and printf "done(%sok).\n", $rua->success ? '' : 'not ';
+        $self->{_cache}->set( $robots_uri, [ WCS_SPIDERED, $rua->status, 0 ] );
+        $robots_txt = $rua->success ? $rua->content : "";
+    } else {
+        $self->{_cache}->set( $robots_uri, [ WCS_SPIDERED, 999, 0 ] );
+    }
+
     $robots_txt ||= @{ $self->{myrules} }
         ? "User-Agent: *\n"
         : "User-Agent: *\nDisallow:\n";
