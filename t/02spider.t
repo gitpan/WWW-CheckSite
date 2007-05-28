@@ -1,7 +1,7 @@
 #! perl -w
 use strict;
 
-# $Id: 02spider.t 623 2007-04-29 09:01:04Z abeltje $
+# $Id: 02spider.t 673 2007-05-28 19:01:18Z abeltje $
 use Test::More;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs abs2rel );
@@ -48,6 +48,8 @@ use_ok 'WWW::CheckSite::Spider';
         uri      => ["http://localhost:$port/index.html"],
         ua_class => 'WWW::Mechanize',
         myrules  => [ "/norobots.html" ],
+        html_by  => 'by_none',
+        css_by   => 'by_none',
     );
 
     isa_ok $sp, 'WWW::CheckSite::Spider';
@@ -60,12 +62,12 @@ use_ok 'WWW::CheckSite::Spider';
         push @pages, $info;
     }
 
-    is @pages, 5, "Got enough pages from spider";
+    is @pages, 6, "Got enough pages from spider";
 
     my( $ok, $nok );
     ($_->{status} == 200 ? $ok : $nok)++ for @pages;
 
-    is  $ok, 4, "ok - pages";
+    is  $ok, 5, "ok - pages";
 
     is $nok, 1, "not ok - pages"
 }
@@ -75,6 +77,8 @@ use_ok 'WWW::CheckSite::Spider';
         uri      => ["http://localhost:$port/index.html"],
         ua_class => 'WWW::Mechanize',
         exclude  => qr/norobots.html$/,
+        html_by  => 'by_none',
+        css_by   => 'by_none',
     );
 
     isa_ok $sp, 'WWW::CheckSite::Spider';
@@ -87,11 +91,11 @@ use_ok 'WWW::CheckSite::Spider';
         push @pages, $info;
     }
 
-    is @pages, 5, "Got enough pages from spider";
+    is @pages, 6, "Got enough pages from spider";
 
     my( $ok, $nok );
     ($_->{status} == 200 ? $ok : $nok)++ for @pages;
 
-    is  $ok, 4, "ok - pages";
+    is  $ok, 5, "ok - pages";
     is $nok, 1, "not ok - pages"
 }

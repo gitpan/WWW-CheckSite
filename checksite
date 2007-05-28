@@ -1,10 +1,10 @@
 #! /usr/bin/perl
-use strict;
 use warnings;
-$|=1;
+use strict;
+$|++;
 
-# $Id: checksite 637 2007-04-30 21:39:56Z abeltje $
-our $VERSION = '0.071';
+# $Id: checksite 676 2007-05-28 22:00:59Z abeltje $
+our $VERSION = '0.073';
 
 =head1 NAME
 
@@ -16,45 +16,74 @@ checksite - Check the contents of a website
 
 =head1 OPTIONS
 
-    --prefix|-p <name>   The prefix (dir) of this check [mandatory]
-    --dir|-d <dir>       The target directory
+=over 2
 
-    --[no]save           Save validation results
-    --load               Load the validation results
+=item B<Results>
 
-    --novalidate         Skip the W3 validation
-    --by_xmllint         Validate by using the xmllint program
-    --by_uri             Validate by sending the uri to W3
-    --by_upload          Validate by uploading the contents to W3
+  --prefix|-p <name>        The prefix (dir) of this check [mandatory]
+  --dir|-d <dir>            The target directory
 
-    --disallow <path>    Add Disallow: rules to robots.txt (multiple)
+=item B<Persistence>
 
-    --nostrictrules      Do not impose /robots.txt on the validator
+  --[no]save                Save validation results
+  --load                    Load the validation results
 
-    --lang|-l <lang>     Set language(s) for Accept-Language: header
+=item B<(X)HTML validation>
 
-    --ua_class <Module>  Set a new UserAgent class (child of WWW::Mechanize)
+  --nohtml                  Skip (X)HTML validation
+  --html_validator <uri>    Base uri for the W3C (X)HTML validator
+  --html_upload             Validate (X)HTML by uploading
+  --html_uri                Validate (X)HTML by sending the uri
+  --xmllint                 Validate by using the xmllint program
 
-    -v                   increase verbosity (multiple)
-    --help|-h            This message
+=item B<CSS validation>
+
+  --nocss                   Skip CSS validation
+  --css_validator <uri>     Base uri for the W3C CSS validator
+  --css_upload              Validate CSS by uploading
+  --css_uri                 Validate CSS by sending the uri
+
+=item B<Exclusion>
+
+  --disallow <path>         Add Disallow: rules to robots.txt (multiple)
+
+  --nostrictrules           Do not impose /robots.txt on the validator
+                            for "local" url's
+
+=item B<General>
+
+  --lang|-l <lang>          Set language(s) for Accept-Language: header
+
+  --ua_class <Module>       Set a new UserAgent class
+                            (child of WWW::Mechanize)
+
+  -v                        Increase verbosity (multiple)
+  --help|-h                 This message
 
 =begin private
 
-    --nott               Force the use of HTML::Template
+  --nott                    Force the use of HTML::Template
 
-    --exclude <pat>      Replace the default exclusion pattern '[#?].*$'
+  --exclude <pat>           Replace the default exclusion pattern '[#?].*$'
 
 =end private
- 
+
+=back
 
 See L<WWW::CheckSite::Manual> for more information.
 
 =head1 DESCRIPTION
 
 This program will spider the specified url and check the availability
-of the B<links>, B<images> and B<stylesheets> on each page. Pages and
-stylesheets are also validated with the validators available at
-L<http://validator.w3.org> and L<http://jigsaw.w3.org>.
+of the B<links>, B<images> and B<stylesheets> on each page.
+
+B<INCOMPATIBLE CHANGE AS OF 0.020>: Pages and stylesheets are B<NO
+LONGER> validated with the validators available at
+L<http://validator.w3.org> and L<http://jigsaw.w3.org>. These
+validators do not allow robots! The W3C-HTML validator is now widly
+available and very installable, so I advise you to run your own. The
+W3C-CSS validator is more work, but I have managed to get that
+to work as well with Jigsaw.
 
 When all pages are checked two reports in HTML-format are
 generated. The F<full.html> report contains all the information for
@@ -78,10 +107,6 @@ The contents of the C<< <title></title> >> tag.
 =item * B<ct>
 
 The MIME type returned by the HTTP-server for the document.
-
-=item * B<valid>
-
-The HTML-validation result.
 
 =item * B<links>
 
@@ -112,6 +137,10 @@ the page with the HTTP-returncode, MIME type and CSS-validation result.
 
 The number of stylesheets found and the number of stylesheets that are ok.
 
+=item * B<valid>
+
+The HTML-validation result.
+
 =back
 
 =cut
@@ -133,65 +162,86 @@ unless ( $@ ) {
         and $dfopt = Config::Auto::parse( $dfopt_file );
 }
 
+use Pod::Usage;
 use Getopt::Long;
 my %opt = (
-    validate    => 1,
-    by_uri      => undef,
-    by_xmllint  => undef,
-    by_upload   => undef,
-    strictrules => 1,
-    exclude     => undef,
-    lang        => undef,
-    disallow    => [ ],
+    html           => 1,
+    html_validator => 'http://localhost/w3c-validator',
+    html_upload    => undef,
+    html_uri       => undef,
+    xmllint        => undef,
 
-    uri         => [ ],
-    dir         => '.',
-    prefix      => undef,
-    save        => 1,
-    load        => 0,
-    tt          => 1,
+    css            => 1,
+    css_validator  => 'http://localhost/css-validator',
+    css_upload     => undef,
+    css_uri        => undef,
 
-    v           => 0,
+    strictrules    => 1,
+    exclude        => undef,
+    lang           => undef,
+    disallow       => [ ],
+
+    uri            => [ ],
+    dir            => '.',
+    prefix         => undef,
+    save           => 0,
+    load           => 0,
+    tt             => 1,
+
+    v              => 0,
 );
 
 if ( $dfopt ) {
     exists $dfopt->{disallow} && ! ref $dfopt->{disallow}
         and $dfopt->{disallow} = [ split /\s*[;:,]\s*/, $dfopt->{disallow} ];
     exists $dfopt->{ $_ } and $opt{ $_ } = $dfopt->{ $_ } for keys %opt;
-    $opt{v} and print "Used default settings from '$dfopt_file'\n";
 } 
 
 GetOptions \%opt => qw(
     uri|u=s@          prefix|p=s          dir|d=s
     save!             load!               tt!
-    strictrules!      ua_class=s          exclude=s
-    lang|l=s
-    validate!
-    disallow=s@
-    by_uri|by_url:s   by_upload|by_upl:s  by_xmllint:s  by_none
-    v+                help|h
-) or usage();
-$opt{help} and usage();
+    strictrules!      disallow=s@         exclude=s
+    ua_class=s        lang|l=s
+
+    html!             html_validator|html-validator=s
+    html_upload!      html_uri!           xmllint:s
+    css!              css_validator|css-validator=s
+    css_upload!       css_uri!
+
+    v+                help|h              man
+) or pod2usage( exitval => 42, verbose => 0 );
+$opt{help} and pod2usage( exitval => 0, verbose => 1 );
+$opt{ man} and pod2usage( exitval => 0, verbose => 2 );
+
+$opt{v} and print "Used default settings from '$dfopt_file'\n";
 
 # Check the mandatory arguments
 @{ $opt{uri} } or $opt{uri} = [ @ARGV ];
-defined $opt{uri} || $opt{load} or usage();
-defined $opt{prefix} or usage();
+defined $opt{uri} || $opt{load} or pod2usage( exitval => 42, verbose => 0 );
+defined $opt{prefix} or pod2usage( exitval => 42, verbose => 0 );
 
-# Set validation method
-my $validate = $opt{validate}
-    ? defined $opt{by_xmllint} ? 'by_xmllint'
-        : defined $opt{by_upload} ? 'by_upload'
-            : 'by_uri' : 'by_none';
+# Work out the validator mess
+if ( $opt{html} ) { # We want (x)html validation
+    if ( $opt{xmllint} ) {
+        $opt{html_by} = 'by_xmllint';
+        $opt{html_validator} = $opt{xmllint} eq '1'
+            ? $WWW::CheckSite::Validator::XMLLINT
+            : $opt{xmllint};
+    } else {
+        $opt{html_validator} ||= $WWW::CheckSite::Validator::VALIDATOR_XHTML;
+        $opt{html_by} = $opt{html_uri} ? 'by_uri' : 'by_upload';
+    }
+} else {
+    $opt{html_by} = 'by_none';
+}
 
-$opt{by_xmllint} && $opt{by_xmllint} !~ /^(?:0|1)?$/ and
-    $WWW::CheckSite::Validator::XMLLINT = $opt{by_xmllint};
-$opt{by_upload} && $opt{by_upload} !~ /^0|1$/ and
-    $WWW::CheckSite::Validator::VALIDATOR_FRM = $opt{by_upload};
-$opt{by_uri} && $opt{by_uri} !~ /^0|1$/ and
-    $WWW::CheckSite::Validator::VALIDATOR_URL = $opt{by_uri};
+if ( $opt{css} ) {
+    $opt{css_validator} ||= $WWW::CheckSite::Validator::VALIDATOR_STYLE;
+    $opt{css_by} = $opt{css_uri} ? 'by_uri' : 'by_upload';
+} else {
+    $opt{css_by} = 'by_none';
+}
 
-#use Data::Dumper; $Data::Dumper::Indent = 1; die Dumper \%opt;
 if ( $opt{load} ) {
     my $validator = WWW::CheckSite->load(
         prefix => $opt{prefix},
@@ -202,57 +252,48 @@ if ( $opt{load} ) {
     $validator->write_report;
 } else {
     my $validator = WWW::CheckSite->new(
-        uri         => $opt{uri},
-        validate    => $validate,
-        strictrules => $opt{strictrules},
-        lang        => $opt{lang},
-        ua_class    => $opt{ua_class},
-        tt          => $opt{tt},
-        myrules     => $opt{disallow},
-        exclude     => $opt{exclude},
+        uri            => $opt{uri},
 
-        prefix      => $opt{prefix},
-        dir         => $opt{dir},
-        save        => $opt{save},
-        v           => $opt{v},
+        html_by        => $opt{html_by},
+        html_validator => $opt{html_validator},
+        css_by         => $opt{css_by},
+        css_validator  => $opt{css_validator},
+
+        strictrules    => $opt{strictrules},
+        lang           => $opt{lang},
+        ua_class       => $opt{ua_class},
+        tt             => $opt{tt},
+        myrules        => $opt{disallow},
+        exclude        => $opt{exclude},
+
+        prefix         => $opt{prefix},
+        dir            => $opt{dir},
+        save           => $opt{save},
+        v              => $opt{v},
     );
     $validator->validate;
     $validator->write_report;
 }
 
-sub usage {
+=head1 FILES
 
-    print <<EO_HELP; exit;
-Usage:
+C<checksite> supports L<Config::Auto>. This means that any of
+following directories is searched for F<checksiteconfig>,
+F<checksite.config>, F<checksiterc> and F<.checksiterc>:
 
-    checksite [options] <uri>
+=over 4
 
-Options:
+=item B<current directory>
 
-    --prefix|-p <name>   The prefix (dir) of this check [mandatory]
-    --dir|-d <dir>       The target directory
+=item B<bin directory> (where the script is installed)
 
-    --[no]save           Save validation results
-    --load               Load the validation results
+=item B<$HOME>
 
-    --novalidate         Skip the W3 validation
-    --by_uri             Validate by sending the uri to W3
-                         Optional alternative uri-mask
-    --by_upload          Validate by uploading the contents to W3
-                         Optional alternative uri
+=item B</etc/>
 
-    --nostrictrules      Do not impose /robots.txt on the validator
+=item B</usr/local/etc/>
 
-    --disallow <path>    Add Disallow: rules to robots.txt (multiple)
-
-    --lang|-l <lang>     Set language(s) for Accept-Language: header
-
-    -v                   increase verbosity (multiple)
-    --help|-h            This message
-
-checksite v$VERSION
-EO_HELP
-}
+=back
 
 =head1 SEE ALSO
 
@@ -279,7 +320,7 @@ be notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright MMV Abe Timmerman, All Rights Reserved.
+Copyright MMV-MMVII Abe Timmerman, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

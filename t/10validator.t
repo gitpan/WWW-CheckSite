@@ -1,37 +1,39 @@
 #! perl -w
 use strict;
 
-# $Id: 10validator.t 559 2006-10-08 09:54:46Z abeltje $
+# $Id: 10validator.t 673 2007-05-28 19:01:18Z abeltje $
 use Test::More;
 
-my( $port, $pid, $s ) = ( 54321 );
 my %test;
 BEGIN {
-    $port = 54321;
     %test = (
-        "http://localhost:$port/index.html" => {
-            link_cnt => 5, links_ok => 5, image_cnt => 1, images_ok => 1,
-             status => 200,
+        "http://localhost:%u/index.html" => {
+            link_cnt => 6, links_ok => 6, image_cnt => 1, images_ok => 1,
+             style_cnt => 1, status => 200,
         },
-        "http://localhost:$port/linkbroken.html" => {
+        "http://localhost:%u/linkbroken.html" => {
             link_cnt => 2, links_ok => 1, image_cnt => 0, images_ok => 0,
-            status => 200,
+            style_cnt => 0, status => 200,
         },
-        "http://localhost:$port/imagebroken.html" => {
+        "http://localhost:%u/imagebroken.html" => {
             link_cnt => 1, links_ok => 1, image_cnt => 2, images_ok => 1,
-            status => 200,
+            style_cnt => 0, status => 200,
         },
-        "http://localhost:$port/areabroken.html" => {
+        "http://localhost:%u/areabroken.html" => {
             link_cnt => 1, links_ok => 0, image_cnt => 1, images_ok => 1,
-            status => 200,
+            style_cnt => 0, status => 200,
         },
-        "http://localhost:$port/doesnotexist.html" => {
+        "http://localhost:%u/doesnotexist.html" => {
             link_cnt => 0, links_ok => 0, image_cnt => 0, images_ok => 0,
-            status => 404,
+            style_cnt => 0, status => 404,
         },
-        "http://localhost:$port/norobots.html" => {
+        "http://localhost:%u/norobots.html" => {
             link_cnt => 4, links_ok => 4, image_cnt => 0, images_ok => 0,
-            status => 200,
+            style_cnt => 0, status => 200,
+        },
+        "http://localhost:%u/inlinestyle.html" => {
+            link_cnt => 1, links_ok => 1, image_cnt => 0, images_ok => 0,
+            style_cnt => 2, status => 200,
         },
     );
 }
@@ -43,12 +45,22 @@ BEGIN {
     eval { use WWW::Mechanize };
     plan $@
         ? ( skip_all => "No WWW::Mechanize available ($@)" )
-        : ( tests => 8 + 5 * scalar keys %test );
+        : ( tests => 10 + 6 * scalar keys %test );
     $findbin = rel2abs dirname $0;
 }
-
 use lib catdir $findbin, 'lib';
+
 use_ok 'HTTPD';
+
+my $port;
+{
+    use_ok 'IO::Socket::INET';
+    my $s = IO::Socket::INET->new( Listen => 5, Proto => 'tcp' );
+    $port = $s->sockport;
+    ok $port, "Using port $port for server";
+}
+
+my( $pid, $s );
 { # Set up local server
 
     ok $s = HTTPD->new( $port ), "Created HTTPD";
@@ -60,14 +72,19 @@ use_ok 'HTTPD';
 }
 END { $pid and kill 9, $pid }
 
+my @tsturi = keys %test;
+$test{ sprintf $_, $port } = delete $test{ $_ } for @tsturi;
+
 my $verbose = $ENV{WCS_VERBOSE} || 0;
 use_ok 'WWW::CheckSite::Validator';
 
 {
     my $sp = WWW::CheckSite::Validator->new(
-        v => $verbose,
-        uri => ["http://localhost:$port/index.html"],
-        validate => 'by_none',
+        v           => $verbose,
+        uri         => ["http://localhost:$port/index.html"],
+        strictrules => 0,
+        html_by     => 'by_none',
+        css_by      => 'by_none',
     );
     isa_ok $sp, "WWW::CheckSite::Validator";
 
@@ -75,7 +92,7 @@ use_ok 'WWW::CheckSite::Validator';
 
     my %pages = ( $index->{ret_uri} => $index );
     while ( my $info = $sp->get_page ) { $pages{ $info->{ret_uri} } = $info }
-    is keys %pages, 6, "Got all the pages";
+    is keys %pages, 7, "Got all the pages";
 
     for my $pg ( keys %test ) {
 
@@ -88,6 +105,9 @@ use_ok 'WWW::CheckSite::Validator';
            "images on page ($pg) $pages{ $pg }->{image_cnt}";
         is $pages{ $pg }->{images_ok}, $test{ $pg }->{images_ok},
            "images_ok on page ($pg) $pages{ $pg }->{images_ok}";
+
+        is $pages{ $pg }->{style_cnt}, $test{ $pg }->{style_cnt},
+           "styles on page ($pg) $pages{ $pg }->{style_cnt}";
 
         is $pages{ $pg }->{status}, $test{ $pg }->{status},
            "status of page ($pg) $pages{ $pg }->{status}";

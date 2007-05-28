@@ -2,7 +2,7 @@ package HTTPD;
 use strict;
 use warnings;
 
-# $Id: HTTPD.pm 440 2005-12-04 16:11:04Z abeltje $
+# $Id: HTTPD.pm 663 2007-05-27 19:25:49Z abeltje $
 use vars qw( $VERSION $DEBUG );
 $VERSION = '0.003';
 $DEBUG ||= 0;
@@ -51,6 +51,7 @@ sub handle_request {
     my( $self, $cgi ) = @_;
 
     ( my $rfile = $ENV{REQUEST_URI} ) =~ s|^/||;
+    $rfile ||= 'index.html';
     my $lfile = catfile $self->{docroot}, $rfile;
     return $self->do_404( $lfile, $@ ) unless -f $lfile;
 

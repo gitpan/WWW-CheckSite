@@ -10,6 +10,109 @@ The filelists have a short symbolic indicator:
 
 Enjoy!
 ___________________________________________________________________________
+[   676] By: abeltje                          on 2007-05-29 00:00:59 +0200
+        Log: * [CHANGE]
+	       * start using Pod::Usage
+	       * save is no longer default
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/checksite
+___________________________________________________________________________
+[   675] By: abeltje                          on 2007-05-28 23:58:52 +0200
+        Log: * [CHANGE]
+	       * UPDATE: the checksite section to reflect the 0.020
+		 changes
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Manual.pod
+___________________________________________________________________________
+[   674] By: abeltje                          on 2007-05-28 23:57:49 +0200
+        Log: * [CHANGE]
+	       + ADD: the new web test files
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/MANIFEST
+___________________________________________________________________________
+[   673] By: abeltje                          on 2007-05-28 21:01:18 +0200
+        Log: * [CHANGE]
+	       * FIX: test-suite to reflect the new validation stuff
+	       + ADD: some tests to increase coverage
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/t/02spider.t, /checksite/t/10validator.t,
+	     /checksite/t/11validator.t, /checksite/t/20checksite.t
+___________________________________________________________________________
+[   672] By: abeltje                          on 2007-05-28 21:00:22 +0200
+        Log: * [CHANGE]
+	       * FIX: validation and extraction of inline styles
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Validator.pm
+___________________________________________________________________________
+[   671] By: abeltje                          on 2007-05-28 20:52:35 +0200
+        Log: * [CHANGE]
+	       * FIX: push the fragmentless uri of a fragmented uir on the
+		 todo stack if it's uri_ok()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   670] By: abeltje                          on 2007-05-28 20:48:29 +0200
+        Log: * [CHANGE]
+	       * FIX: load() wrt the new validation stuff
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   669] By: abeltje                          on 2007-05-28 20:46:01 +0200
+        Log: * [CHANGE]
+	       * FIX: html-error in style-tag
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/t/docroot/index.html
+___________________________________________________________________________
+[   667] By: abeltje                          on 2007-05-28 14:09:33 +0200
+        Log: * [CHANGE]
+	       + ADD: more files for the test-suite
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           + /checksite/t/docroot/inlinestyle.html,
+	     /checksite/t/docroot/robots.txt,
+	     /checksite/t/docroot/style.css
+           ! /checksite/t/docroot/index.html
+___________________________________________________________________________
+[   666] By: abeltje                          on 2007-05-27 22:06:18 +0200
+        Log: * [CHANGE]
+	       * INTERFACE CHANGE:
+		 * split validation into html_validator (html_by) and
+		   css_validator (css_by)
+		 - remove the old validation stuff ({validate}
+		   $VALIDATOR_URI et al)
+	       + ADD: first stab at validation of inline styles
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/README, /checksite/checksite,
+	     /checksite/lib/WWW/CheckSite/Validator.pm,
+	     /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   665] By: abeltje                          on 2007-05-27 21:39:53 +0200
+        Log: * [CHANGE]
+	       * FIX: also set the cache for unstripped uri, in case they
+		 are !uri_ok()
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   664] By: abeltje                          on 2007-05-27 21:26:31 +0200
+        Log: * [CHANGE]
+	       * FIX: charset in the content-type meta-tag
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/t/docroot/areabroken.html,
+	     /checksite/t/docroot/imagebroken.html,
+	     /checksite/t/docroot/index.html,
+	     /checksite/t/docroot/linkbroken.html,
+	     /checksite/t/docroot/norobots.html
+___________________________________________________________________________
+[   663] By: abeltje                          on 2007-05-27 21:25:49 +0200
+        Log: * [CHANGE]
+	       * FIX: use index.html for '/'
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/t/lib/HTTPD.pm
+___________________________________________________________________________
+[   649] By: abeltje                          on 2007-05-13 23:40:31 +0200
+        Log: * Regenerate Changes for WWW::CheckSite 0.018
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
 [   648] By: abeltje                          on 2007-05-13 23:30:35 +0200
         Log: * prepare for release 0.018
         Url: http://source.test-smoke.org/repos/tools/checksite

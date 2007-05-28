@@ -12,18 +12,27 @@ their own problems.
     <!-- $Id -->
     <meta http-equiv="Content-type"
           content="text/html; charset=ISO-8859-1" />
-    <link rel="stylesheet" type="text/css"
-          href="/style.css" />
+    <style type="text/css">
+body {
+    background-color: #999999;
+    color:            red;
+    font-family:      Helvetica, Arial, sans-serif;
+}
+    </style>
+    <style type="text/css">
+.link {
+    background-color: transparent;
+    color:            blue;
+}
+.link a:visited, .link a {
+    background-color: transparent;
+    color:            blue;
+}
+    </style>
     <title>Primary testpage for WWW::CheckSite</title>
   </head>
   <body>
-    <a name="top"></a>
-    <a href="linkbroken.html">Link broken</a>
-    <a href="imagebroken.html">Image broken</a>
-    <a href="areabroken.html">Area broken</a>
-    <a href="norobots.html">Not For Robots</a>
-    <a href="inlinestyle.html">Inline Style</a>
-    <a href="index.html#top">Top</a>
-    <img src="dot.gif" alt="just a single pixel" />
+    <h1>Inline Style</h1>
+    <p class="link"><a href="index.html">index</a></p>
   </body>
 </html>

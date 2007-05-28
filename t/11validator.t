@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-# $Id: 11validator.t 635 2007-04-30 21:32:55Z abeltje $
+# $Id: 11validator.t 673 2007-05-28 19:01:18Z abeltje $
 use Test::More;
 
 use File::Spec::Functions qw( :DEFAULT rel2abs abs2rel );
@@ -12,13 +12,22 @@ BEGIN {
     eval { use WWW::Mechanize };
     plan $@
         ? ( skip_all => "No WWW::Mechanize available ($@)" )
-        : ( tests => 21 );
+        : ( tests => 23 );
     $findbin = rel2abs dirname $0;
 }
 
 use lib catdir $findbin, 'lib';
 use_ok 'HTTPD';
-my( $port, $pid, $s ) = ( 54321 );
+
+my $port;
+{
+    use_ok 'IO::Socket::INET';
+    my $s = IO::Socket::INET->new( Listen => 5, Proto => 'tcp' );
+    $port = $s->sockport;
+    ok $port, "Using port $port for server";
+}
+
+my( $pid, $s );
 { # Set up local server
 
     ok $s = HTTPD->new( $port ), "Created HTTPD";
@@ -38,25 +47,28 @@ BEGIN {
 }
 
 my %test = (
-    "http://localhost:$port/index.html" => {
+    "http://localhost:%u/index.html" => {
         head => '', check => 1, fetch => 1, validate => 0,
     },
-    "http://localhost:$port/linkbroken.html" => {
+    "http://localhost:%u/linkbroken.html" => {
         head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
-    "http://localhost:$port/imagebroken.html" => {
+    "http://localhost:%u/imagebroken.html" => {
         head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
-    "http://localhost:$port/areabroken.html" => {
+    "http://localhost:%u/areabroken.html" => {
         head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
-    "http://localhost:$port/doesnotexist.html" => {
+    "http://localhost:%u/doesnotexist.html" => {
         head => 'HEAD', check => 1, fetch => 1, validate => 0,
     },
-    "http://localhost:$port/dot.gif" => {
+    "http://localhost:%u/dot.gif" => {
         head => $imgreq, check => 1, fetch => 0, validate => 0,
     },
 );
+
+my @tsturi = keys %test;
+$test{ sprintf $_, $port } = delete $test{ $_ } for @tsturi;
 
 use_ok 'WWW::CheckSite::Validator';
 
@@ -64,7 +76,8 @@ use_ok 'WWW::CheckSite::Validator';
     local *SAVEOUT; open SAVEOUT, ">& STDOUT";
     my $out = tie *STDOUT, 'CatchOut';
     ok my $wcs = WWW::CheckSite::Validator->new(
-        validate => 'by_none',
+        html_by  => 'by_none',
+        css_by   => 'by_none',
         uri      => ["http://localhost:$port/index.html"],
         v        => 1,
     ), "called new()";

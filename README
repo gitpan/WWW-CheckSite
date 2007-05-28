@@ -1,9 +1,14 @@
-README for WWW::CheckSite 0.018
+README for WWW::CheckSite 0.020
 ===============================
 This program will spider from the specified url and check the
 availability of the links, images and stylesheets on each page. Pages
-and stylesheets are also validated with the validators available at
-http://validator.w3.org and http://jigsaw.w3.org.
+and stylesheets can also be validated with the validators made
+available by W3C.
+
+*INCOMPATIBLE CHANGE*: As of 0.020 validation is no longer the
+ default, and you should not use the old defaults as they do not allow
+ robots! Please install your own copies of the W3C HTML validator and
+ CSS validator .
 
 When all pages are checked two 'kwalitee' reports in HTML-format are
 generated. The "full.html" report contains all the information for all

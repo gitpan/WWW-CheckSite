@@ -2,9 +2,9 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 643 2007-05-13 12:35:45Z abeltje $
+# $Id: Spider.pm 671 2007-05-28 18:52:35Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.021';
+$VERSION = '0.023';
 
 =head1 NAME
 
@@ -269,7 +269,10 @@ sub _update_stack {
                 $stack->push( $check );
                 $data = [ WCS_TOSPIDER, undef, $this_page->[2] + 1 ];
 	    } else {
-                $data = [ WCS_OUTSCOPE, undef, $this_page->[2] + 1 ];
+                $data = [ WCS_OUTSCOPE, 999, $this_page->[2] + 1 ];
+                $cache->set( $new => $data );
+                $self->uri_ok( $check ) and 
+                    $data = [ WCS_TOFOLLOW, undef, $this_page->[2] + 1 ];
             }
             $cache->set( $check => $data );
         }

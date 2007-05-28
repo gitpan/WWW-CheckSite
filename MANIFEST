@@ -1,4 +1,4 @@
-MANIFEST                    $Id: MANIFEST 562 2006-10-08 13:20:38Z abeltje $
+MANIFEST                    $Id: MANIFEST 674 2007-05-28 21:57:49Z abeltje $
 README
 Changes
 Makefile.PL
@@ -24,8 +24,11 @@ t/docroot/areabroken.html
 t/docroot/dot.gif
 t/docroot/imagebroken.html
 t/docroot/index.html
+t/docroot/inlinestyle.html
 t/docroot/linkbroken.html
 t/docroot/norobots.html
+t/docroot/robots.txt
+t/docroot/style.css
 t/lib/HTTPD.pm
 t/lib/mime.types
 t/lib/HTTP/Server/Simple.pm

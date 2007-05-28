@@ -2,9 +2,9 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 633 2007-04-30 21:08:56Z abeltje $
-use vars qw( $VERSION $VALIDATOR_URL $VALIDATOR_FRM $VALIDATOR_STYLE $XMLLINT );
-$VERSION = '0.017';
+# $Id: Validator.pm 672 2007-05-28 19:00:22Z abeltje $
+use vars qw( $VERSION $VALIDATOR_XHTML $VALIDATOR_STYLE $XMLLINT );
+$VERSION = '0.019';
 
 =head1 NAME
 
@@ -59,10 +59,9 @@ validation.
 use WWW::CheckSite::Spider qw( :const );
 use base 'WWW::CheckSite::Spider';
 BEGIN {
-    $VALIDATOR_URL   = 'http://validator.w3.org/check?uri=%s';
-    $VALIDATOR_FRM   = 'http://validator.w3.org/';
+    $VALIDATOR_XHTML = 'http://localhost/w3c-validator/';
     $XMLLINT         = 'xmllint';
-    $VALIDATOR_STYLE = 'http://jigsaw.w3.org/css-validator/';
+    $VALIDATOR_STYLE = 'http://localhost/css-validator/';
 }
 
 =head2 WWW::CheckSite::Validator->new( %args )
@@ -70,14 +69,28 @@ BEGIN {
 Extend C<< WWW::CheckSite::Spider->new >> to check for L<Image::Info>
 so we can do a basic check on the images.
 
+On top of the attributes used by L<WWW::CheckSite::Spider>, this class
+uses:
+
+=over 4
+
+=item * B<html_by> => by_uri|by_upload|by_none
+
+=item * B<html_validator> => <uri>
+
+=item * B<css_by> => by_uri|by_upload|by_none
+
+=item * B<css_validator> => <uri>
+
+=back
+
+B<NOTE>: the I<validate> attrubute has been removed.
+
 =cut
 
 sub new {
     my $class = shift;
     my $self = $class->SUPER::new( @_ );
-
-    $self->{validate} ||= 'by_none';
-    $self->{novalidate} = $self->{validate} eq 'by_none';
 
     eval qq{use Image::Info qw( image_info )};
     $self->{can_val_image} = ! $@;
@@ -169,14 +182,15 @@ sub check_links {
 
     my @links = $mech->success ? $self->links_filtered : ();
 
+    $self->{v} > 1 and printf "[check_links] found: %u\n", scalar @links;
     my @checked;
     for my $link ( @links ) {
         my $check = URI->new_abs( $link->url, $mech->uri );
         $self->more_rrules( $check );
         my $in_cache = $cache->has( $check );
         unless ( $in_cache && defined $in_cache->[1] ) {
-            $self->more_rrules( $check );
             if ( ! $self->allowed( $check ) ) {
+                $in_cache->[0] = WCS_OUTSCOPE;
                 $in_cache->[1] = '999';
                 $self->{v} and print "  HEAD '$check': skipped.\n";
             } else {
@@ -241,6 +255,7 @@ sub check_images {
 
     my @images = $mech->success ? $mech->images : ();;
 
+    $self->{v} > 1 and printf "[check_images] found: %u\n", scalar @images;
     my @checked;
     for my $img ( @images ) {
         my $check = URI->new_abs( $img->url, $mech->base );
@@ -279,7 +294,7 @@ sub check_images {
             tag    => 'ALT',
             text   => ( defined( $img->alt )
                 ? ($img->alt || "")
-                : $self->{novalidate} ? "" : ">No text in TAG<" ),
+                : $self->{html_by} eq 'by_none' ? "" : ">No text in TAG<" ),
             status => $in_cache->[1],
             ct     => $in_cache->[2],
             valid  => $in_cache->[3],
@@ -330,6 +345,7 @@ sub check_styles {
 	push @styles, $token->[1]{href};
     }
 
+    $self->{v} > 1 and printf "[check_styles] found: %u\n", scalar @styles;
     my @checked;
     for my $sheet ( @styles ) {
         my $check = URI->new_abs( $sheet, $mech->uri );
@@ -345,7 +361,7 @@ sub check_styles {
                 $in_cache->[3] = -1;
             } else {
                 my $ua = $self->new_agent;
-                my $method = $self->{validate} =~ /by_(?:upload|uri)/
+                my $method = $self->{css_by} =~ /by_(?:upload|uri)/
                     ? 'get' : 'head';
                 $self->{v} and print "  \U$method\E '$check': ";
                 eval { $ua->$method( $check ) };
@@ -369,7 +385,25 @@ sub check_styles {
             valid  => $in_cache->[3],
         };
     }
-    $stats->{style_cnt} = @styles;
+
+    my $inline_styles = $self->_extract_inline_styles;
+    $self->{v} > 1 and
+        printf "[validate_inline_style] found: %u\n", scalar @$inline_styles;
+    my $count = 1;
+    for my $style ( @$inline_styles ) {
+        $self->{v} > 1 and print "validate_inline_style: $count\n";
+        push @checked, {
+            link   => "InlineStyle-" . $count++,
+            uri    => '',
+            tag    => 'style',
+            text   => '',
+            status => 200,
+            ct     => 'text/css',
+            valid  => $self->validate_inline_style( $style ),
+        };
+    }
+
+    $stats->{style_cnt} = @checked;
     $stats->{styles} = \@checked;
     $stats->{styles_ok}  = grep +($_->{status} == 200)  => @checked;
     $stats->{vstyles_ok} = grep
@@ -390,11 +424,11 @@ sub validate {
     unless ( $self->current_agent->success ) {
         $self->{v} and
             print "Validate @{[$self->current_agent->uri]}: skipped\n";
-        $stats->{valid} = 0;
+        $stats->{valid} = -1;
         return $stats;
     }
 
-    my $how_to = $self->{validate} || 'by_none';
+    my $how_to = $self->{html_by} || 'by_none';
     my $validate = "validate_$how_to";
     $self->can( $validate ) or $validate = 'validate_by_none';
 
@@ -421,7 +455,9 @@ Sends only the uri to W3.ORG and get the validation result.
 sub validate_by_uri {
     my( $self, $stats ) = @_;
 
-    my $val_uri = sprintf $VALIDATOR_URL, $self->current_agent->uri;
+    ( my $fmt = $self->{html_validator} ) =~ s!/+$!!;
+    $fmt .= '/check?uri=%s';
+    my $val_uri = sprintf $fmt, $self->current_agent->uri;
     $self->{v} and print "HTML-Validate $val_uri: ";
 
     my $ua = $self->new_agent;
@@ -452,7 +488,7 @@ sub validate_by_upload {
     my( $mech ) = @{ $self }{qw( _agent )};
     File::Temp->import( 'tempfile' );
     my( $fh, $filename ) = tempfile( 'wcvtempXXXX', SUFFIX => '.html', 
-                                                    UNLINK => 1 );
+                                                    UNLINK => 0 );
     print $fh $mech->content;
     close $fh;
 
@@ -461,17 +497,21 @@ sub validate_by_upload {
 
     my $ua = $self->new_agent;
     $self->{lang} and $ua->default_header( 'Accept-Language' => 'en' );
-    $ua->get( $VALIDATOR_FRM );
-    $ua->submit_form( 
-        form_number => 2,
-        fields      => { uploaded_file => $filename },
-    );
+    $ua->get( $self->{html_validator} );
+    if ( $ua->success ) {
+        $ua->submit_form( 
+            form_number => 2,
+            fields      => { uploaded_file => $filename },
+        );
+    }
 
     $stats->{valid} = $ua->success 
         ? $ua->content =~ /This Page Is Valid/ : -1;
     $self->{v} and printf " done(%sok)\n", $stats->{valid} == 1 ? "" : "not ";
 
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );
+
+    -f $filename and unlink $filename;
 }
 
 =head2 $wcs->validate_by_xmllint( $stats )
@@ -490,19 +530,22 @@ sub validate_by_xmllint {
     my( $ua ) = @{ $self }{qw( _agent )};
     File::Temp->import( 'tempfile' );
     my( $fh, $filename ) = tempfile( 'wcvtempXXXX', SUFFIX => '.html', 
-                                                    UNLINK => 1 );
+                                                    UNLINK => 0 );
     print $fh $ua->content;
     close $fh;
 
-    $self->{v} and print "[$XMLLINT $opts $filename 2>\&1]\n";
+    my $cmd = qq[$self->{html_validator} $opts $filename 2>\&1];
+    $self->{v} and print "[$cmd]\n";
     $self->{v} and printf "xmllint(%s): %s ", $filename, $ua->uri;
     $stats->{validate} = $filename;
 
-    my $out = qx[$XMLLINT $opts $filename 2>\&1];
+    my $out = qx[$cmd];
     $self->{v} and print $out;
     $stats->{valid} = defined $out
         ? $out eq '' : -1;
     $self->{v} and printf " done(%sok)\n", $stats->{valid} == 1 ? "" : "not ";
+
+    -f $filename and unlink $filename;
 }
 
 =head2 $wcs->validate_style( $ua )
@@ -514,11 +557,13 @@ Dispatch the validation to the right method.
 sub validate_style {
     my( $self, $ua ) = @_;
 
-    $self->{novalidate} and return -1;
-
-    my $how_to = $self->{validate} || 'by_none';
+    $self->{css_validator} or return -1;
+    
+    my $how_to = $self->{css_by} || 'by_none';
     my $validate = "style_$how_to";
     $self->can( $validate ) or $validate = 'style_by_none';
+
+    $self->{v} > 1 and print "[validate_style] $validate\n";
 
     $self->$validate( $ua );
 }
@@ -545,7 +590,7 @@ sub style_by_uri {
     my $uri = $ua->uri;
     $self->{v} and print "CSS-Validate $VALIDATOR_STYLE?$uri: ";
     $self->{lang} and $ua->default_header( 'Accept-Language' => 'en' );
-    $ua->get( $VALIDATOR_STYLE );
+    $ua->get( $self->{css_validator} );
     $ua->submit_form(
         form_number => 1,
         fields      => { uri => $uri },
@@ -571,23 +616,56 @@ call the validator with that temporary file and return the result.
 sub style_by_upload {
     my( $self, $ua ) = @_;
 
+    return $self->validate_upload_style( $ua, $ua->content );
+}
+
+=head2 $wcs->validate_inline_style( $style )
+
+Creates a new user-agent, and calls C<validate_upload_style()>.
+
+=cut
+
+sub validate_inline_style {
+    my( $self, $style ) = @_;
+
+    $self->{css_by} eq 'by_none' and return -1;
+    $self->{css_validator} or return -1;
+
+    my $ua = $self->new_agent;
+    return $self->validate_upload_style( $ua, $style );
+}
+
+=head2 $wcs->validate_upload_style( $ua, $style )
+
+Saves C<$style> to a temporary file and uploads it to the css-validator.
+
+=cut
+
+sub validate_upload_style {
+    my( $self, $ua, $style ) = @_;
+
     eval "use File::Temp";
     return if $@;
 
     File::Temp->import( 'tempfile' );
     my( $fh, $filename ) = tempfile( 'wcvtempXXXX', SUFFIX => '.css', 
-                                                    UNLINK => 1 );
-    print $fh $ua->content;
+                                                    UNLINK => 0 );
+    print {$fh} $style;
     close $fh;
 
-    $self->{v} and printf "CSS-Validate_upl(%s): %s ", $filename, $ua->uri;
+    my $uri = $ua->{req} ? eval { $ua->uri } : 'InlineStyle';
+    $self->{v} and printf "CSS-Validate_upl(%s): %s ", $filename, $uri;
 
     $self->{lang} and $ua->default_header( 'Accept-Language' => 'en' );
-    $ua->get( $VALIDATOR_STYLE );
-    $ua->submit_form( 
-        form_number => 2,
-        fields      => { file => $filename },
-    );
+    $ua->get( $self->{css_validator} );
+    if ( $ua->success ) {
+       $ua->submit_form( 
+           form_number => 2,
+           fields      => { file => $filename },
+        );
+    } else {
+        warn "[css_validator] " . $ua->status . "\n";
+    }
 
     my $valid = $ua->success 
         ? $ua->content !~ m|<h2>Errors</h2>|i : -1;
@@ -595,7 +673,31 @@ sub style_by_upload {
 
     $self->{lang} and $ua->default_header( 'Accept-Language' => $self->{lang} );
 
+    -f $filename and unlink $filename;
+
     return $valid;
+}
+
+=head2 $wcs->_extract_inline_styles
+
+Uses L<HTML::TokeParser> to extract inline styles from a document and
+returns a reference to an array with the contents of the inline style.
+
+=cut
+
+sub _extract_inline_styles {
+    my( $self ) = @_;
+    my $ua = $self->{_agent};
+    $ua->success or return [ ];
+
+    my @inline = ( );
+    my $p = HTML::TokeParser->new( \( $ua->content ) );
+    while ( my $t = $p->get_tag( 'style' ) ) {
+        ( my $style = $p->get_text( '/style' ) ) =~ s/\s+$//;
+        $style and push @inline, $style;
+        $self->{v} > 1 and print "[_extract_styles]$style\n";
+    }
+    return \@inline;
 }
 
 =head2 $wcs->validate_image( $ua )
@@ -635,6 +737,11 @@ Why?
 
 sub set_action {
     my( $self, $check, $in_cache ) = @_;
+
+    defined $in_cache && defined $in_cache->[0] or do {
+        require Carp;
+        Carp::confess( "[INTERNAL ERROR]: $check" );
+    };
     
     my $reason = ($in_cache->[0] & WCS_OUTSCOPE)  ? $self->{_uri_ok} eq 'scope'
         ? 'Out of scope' : 'Excluded by pattern' : '';

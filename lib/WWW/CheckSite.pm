@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 648 2007-05-13 21:30:35Z abeltje $
-our $VERSION = '0.018';
+# $Id: CheckSite.pm 670 2007-05-28 18:48:29Z abeltje $
+our $VERSION = '0.019_51';
 
 =head1 NAME
 
@@ -81,6 +81,8 @@ Initialize a new instance. Options supported:
 
 =item * B<v> => I<$verbosity>, where I<$verbosity> may be
 
+=item * B<tt> => boolean to allow the use of Template Toolkit
+
 =over
 
 =item 0
@@ -106,6 +108,7 @@ sub new {
     my $class = shift;
 
     my %args = @_ ? ref $_[0] ? %{ +shift } : @_ : ();
+    exists $args{tt} or $args{tt} = 1;
 
     exists $args{uri} && length $args{uri} or
         _die( "", "Usage: WWW::CheckSite->new( uri => q<your_uri> )" );
@@ -129,6 +132,8 @@ Initialize the object from datafile. Supported options:
 
 =item * B<prefix> => the prefix used for this dataset [mandatory]
 
+=item * B<tt> => boolean to allow the use of Template Toolkit
+
 =back
 
 =cut
@@ -137,6 +142,7 @@ sub load {
     my $class = shift;
 
     my %args = ref $_[0] ? %{ +shift } : @_;
+    exists $args{tt} or $args{tt} = 1;
 
     exists $args{prefix} && length $args{prefix} or
         _die( "", "Usage: WWW::CheckSite->load( prefix => 'xxx' )" );
@@ -148,7 +154,8 @@ sub load {
 
     my $self = retrieve $wcsfile;
     $self->{v} and print "Loaded '$wcsfile'\n";
-    $self->{ $_ } = $args{ $_ } for qw( dir prefix tt v );
+    exists $args{ $_ } and $self->{ $_ } = $args{ $_ }
+        for qw( dir prefix tt v html_by css_by html_validator css_validator );
 
     # Backward compatibility wrt {uri}
     ref $self->{uri} or $self->{uri} = [ $self->{uri} ];
@@ -168,15 +175,18 @@ sub validate {
     my $self = shift;
 
     my $wcs = WWW::CheckSite::Validator->new(
-        uri         => $self->{uri},
-        ua_class    => $self->{ua_class},
-        ua_args     => $self->{ua_args},
-        exclude     => $self->{exclude},
-        validate    => $self->{validate},
-        strictrules => $self->{strictrules},
-        lang        => $self->{lang},
-        myrules     => $self->{myrules},
-        v           => $self->{v} > 1,
+        uri            => $self->{uri},
+        ua_class       => $self->{ua_class},
+        ua_args        => $self->{ua_args},
+        exclude        => $self->{exclude},
+        html_validator => $self->{html_validator},
+        html_by        => $self->{html_by},
+        css_validator  => $self->{css_validator},
+        css_by         => $self->{css_by},
+        strictrules    => $self->{strictrules},
+        lang           => $self->{lang},
+        myrules        => $self->{myrules},
+        v               => $self->{v} > 1,
     );
 
     my( $cnt, $intref ) = ( 0, 'a' );
@@ -224,12 +234,9 @@ on the W3 validator.
 sub _set_validator_fmt {
     my( $self ) = @_;
 
-    if ( $self->{validate} eq 'by_upload' ) {
-        $self->{validator_fmt} = $WWW::CheckSite::Validator::VALIDATOR_FRM .
-                                 "/check?uri=%s";
-    } else {
-        $self->{validator_fmt} = $WWW::CheckSite::Validator::VALIDATOR_URL;
-    }
+    my $val_base = $self->{html_validator}
+                || $WWW::CheckSite::Validator::VALIDATOR_XHTML;
+    $self->{validator_fmt} = "$val_base/check?uri=%s";
 }
  
 =head2 $wcs->dump_links( $noskipped )
@@ -419,7 +426,7 @@ sub write_tt_report {
             spider_time  => $self->_spider_time,
             report_time  => $self->_report_time,
             now_time     => scalar localtime,
-            did_validate => ($self->{validate} =~ /by_(?:upload|uri)/ ? 1 : 0),
+            did_validate => ($self->{html_by} =~ /by_(?:upload|uri)/ ? 1 : 0),
             strict_rules => $self->{strictrules},
             language     => $self->{lang},
             summlink     => basename( name_outfile( $self->_datadir, 'summ' ) ),
