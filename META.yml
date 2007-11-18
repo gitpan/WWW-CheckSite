@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                WWW-CheckSite
-version:             0.019_51
+version:             0.019_52
 abstract:            OO interface to an iterator that checks a website
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.32

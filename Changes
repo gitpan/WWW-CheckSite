@@ -10,6 +10,23 @@ The filelists have a short symbolic indicator:
 
 Enjoy!
 ___________________________________________________________________________
+[   682] By: abeltje                          on 2007-07-22 13:23:45 +0200
+        Log: * [CHANGE]
+	       * prepare a new snapshot ( 1.19_52)
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite.pm
+___________________________________________________________________________
+[   681] By: abeltje                          on 2007-07-22 13:23:03 +0200
+        Log: * [CHANGE]
+	       * FIX: RT#27523 Wrong "no robots allowed" messages?
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/lib/WWW/CheckSite/Spider.pm
+___________________________________________________________________________
+[   677] By: abeltje                          on 2007-05-29 00:02:10 +0200
+        Log: * Regenerate Changes for WWW::CheckSite 0.019_51
+        Url: http://source.test-smoke.org/repos/tools/checksite
+           ! /checksite/Changes
+___________________________________________________________________________
 [   676] By: abeltje                          on 2007-05-29 00:00:59 +0200
         Log: * [CHANGE]
 	       * start using Pod::Usage

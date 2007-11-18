@@ -2,8 +2,8 @@ package WWW::CheckSite;
 use strict;
 use warnings;
 
-# $Id: CheckSite.pm 670 2007-05-28 18:48:29Z abeltje $
-our $VERSION = '0.019_51';
+# $Id: CheckSite.pm 682 2007-07-22 11:23:45Z abeltje $
+our $VERSION = '0.019_52';
 
 =head1 NAME
 
