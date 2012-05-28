@@ -2,9 +2,9 @@ package WWW::CheckSite::Spider;
 use strict;
 use warnings;
 
-# $Id: Spider.pm 681 2007-07-22 11:23:03Z abeltje $
+# $Id: Spider.pm 841 2012-05-28 07:33:14Z abeltje $
 use vars qw( $VERSION @EXPORT_OK %EXPORT_TAGS );
-$VERSION = '0.024';
+$VERSION = '0.025';
 
 =head1 NAME
 
@@ -341,10 +341,12 @@ Filter out the uri's that will fail:
 sub links_filtered {
     my $self = shift;
     return grep {
-        my $url = $self->filter_link( $_->url );
-        ! defined $url
-            ? undef
-            : ( ($url eq $_->url and $_->url( $url )), $_ )
+        if ($_->tag ne 'link') {
+            my $url = $self->filter_link( $_->url );
+            ! defined $url
+                ? undef
+                : ( ($url eq $_->url and $_->url( $url )), $_ )
+        }
     } $self->current_agent->links;
 }
 
@@ -462,7 +464,8 @@ sub new_agent {
     };
 
     my $ua = $self->{ua_class}->new(
-        agent => $self->agent,
+        agent     => $self->agent,
+        autocheck => 0,
         %{ $self->{ua_args} }
     );
     $self->{lang} and

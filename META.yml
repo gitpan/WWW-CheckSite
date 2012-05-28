@@ -1,19 +1,27 @@
---- #YAML:1.0
-name:                WWW-CheckSite
-version:             0.019_52
-abstract:            OO interface to an iterator that checks a website
-license:             ~
-generated_by:        ExtUtils::MakeMaker version 6.32
-distribution_type:   module
-requires:     
-    LWP:                           0
-    Storable:                      2.06
-    Template:                      2
-    Time::HiRes:                   0
-    WWW::Mechanize:                1.2
-    WWW::RobotRules:               0
-meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.2.html
-    version: 1.2
+---
+abstract: 'OO interface to an iterator that checks a website'
 author:
-    - Abe Timmerman <abeltje@cpan.org>
+  - 'Abe Timmerman <abeltje@cpan.org>'
+build_requires:
+  ExtUtils::MakeMaker: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.112150'
+license: unknown
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: WWW-CheckSite
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  LWP: 0
+  Storable: 2.06
+  Template: 2
+  Time::HiRes: 0
+  WWW::Mechanize: 1.2
+  WWW::RobotRules: 0
+version: 0.020

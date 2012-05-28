@@ -2,7 +2,7 @@ package WWW::CheckSite::Validator;
 use strict;
 use warnings;
 
-# $Id: Validator.pm 672 2007-05-28 19:00:22Z abeltje $
+# $Id: Validator.pm 841 2012-05-28 07:33:14Z abeltje $
 use vars qw( $VERSION $VALIDATOR_XHTML $VALIDATOR_STYLE $XMLLINT );
 $VERSION = '0.019';
 
@@ -204,7 +204,7 @@ sub check_links {
                 $ua->success && ! $self->ct_can_validate( $ua ) and
                     $in_cache->[0] = WCS_NOCONTENT;
             }
-	}
+        }
 
         push @checked, {
             link   => $link->url,
@@ -281,12 +281,12 @@ sub check_images {
                     $valid = $success ? -1 : 0;
                 } else { # it's GET
                     $valid = $success ? $self->validate_image( $ua ) : 0;
-		}
+                }
                 $in_cache->[3] = $valid;
                 $self->{v} and
                     printf "done(%sok).\n", $ua->success ? '' : 'not ';
             }
-	}
+        }
 
         push @checked, {
             link   => $img->url,
@@ -342,7 +342,7 @@ sub check_styles {
     while ( my $token = $p->get_tag( 'link' ) ) {
         ( exists $token->[1]{rel}  && $token->[1]{rel}  eq 'stylesheet' ) &&
         ( exists $token->[1]{type} && $token->[1]{type} eq 'text/css' ) or next;
-	push @styles, $token->[1]{href};
+        push @styles, $token->[1]{href};
     }
 
     $self->{v} > 1 and printf "[check_styles] found: %u\n", scalar @styles;
@@ -373,7 +373,7 @@ sub check_styles {
                 $in_cache->[3] = $method eq 'get' && $success
                                      ? $self->validate_style( $ua ) : -1;
             }
-	}
+        }
 
         push @checked, {
             link   => $sheet,

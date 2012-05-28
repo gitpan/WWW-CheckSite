@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 # $Id: CheckSite.pm 682 2007-07-22 11:23:45Z abeltje $
-our $VERSION = '0.019_52';
+our $VERSION = '0.020';
 
 =head1 NAME
 

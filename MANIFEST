@@ -34,4 +34,5 @@ t/lib/mime.types
 t/lib/HTTP/Server/Simple.pm
 t/lib/HTTP/Server/Simple/CGI.pm
 t/tsorg/tsorg.wcs
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
